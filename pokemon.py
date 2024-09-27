@@ -16,4 +16,4 @@ class Pokemon:
         return self.abilities
 
     def __str__(self):
-        return f"{self.name} ({self.url})"
+        return f"Pokemon's Name: {self.name}, ID: {self.id}, Abilities: {', '.join(self.abilities)}, URL: ({self.url})"

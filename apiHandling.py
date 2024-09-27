@@ -28,7 +28,7 @@ if draw_pokemon.lower() == "y":
                 print(f"ID: {pokemon_data['id']}")
                 print(f"Abilities: {[ability['ability']['name'] for ability in pokemon_data['abilities']]}")
                 print(Pokemon(pokemon_url, pokemon_data))
-                print("----------------------------------------------------------")
+                print("----------------------------------------------------------------------------------------------------------------------")
                 pokemons.append(Pokemon(pokemon_url, pokemon_data))
         # save_file = File([str(pokemon)+'\n' for pokemon in pokemons])
         save_file = File(''.join(f"{pokemon}\n" for pokemon in pokemons))
