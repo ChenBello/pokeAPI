@@ -1,4 +1,6 @@
 import requests
+from pokemon import Pokemon
+from manifulateFile import  File
 
 from pokemon import Pokemon
 # Ask the user if they would like to draw a Pokémon
@@ -28,6 +30,13 @@ if draw_pokemon.lower() == "y":
                 print(Pokemon(pokemon_url, pokemon_data))
                 print("----------------------------------------------------------")
                 pokemons.append(Pokemon(pokemon_url, pokemon_data))
+        # save_file = File([str(pokemon)+'\n' for pokemon in pokemons])
+        save_file = File(''.join(f"{pokemon}\n" for pokemon in pokemons))
+
+        for pokemon in save_file.data:
+            save_file.save_to_file('Pokemons.txt')
+
+        print(save_file.data)
 
         # print(f"Pokemons: {(pokemon.name+',' for pokemon in pokemons)}")
     else:
