@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Pokémon</title>
+</head>
+<body>
+    <h1>Random Pokémon</h1>
+    {% if pokemon %}
+        <h2>Name: {{ pokemon['name'] }}</h2>
+        <h3>ID: {{ pokemon['id'] }}</h3>
+        <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3>
+        <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" />
+    {% else %}
+        <p>No Pokémon found!</p>
+    {% endif %}
+    <form method="get" action="/">
+        <button type="submit">Get Random Pokémon</button>
+    </form>
+</body>
+</html>

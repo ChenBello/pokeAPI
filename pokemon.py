@@ -21,13 +21,15 @@ class Pokemon:
         self.name = pokemon_data['name']
         self.id = pokemon_data['id']
         self.abilities = [ability['ability']['name'] for ability in pokemon_data['abilities']]
+        self.image_url = pokemon_data['sprites']['front_default']
 
     def to_dict(self):
         return {
             'url': self.url,
             'name': self.name,
             'id': self.id,
-            'abilities': self.abilities
+            'abilities': self.abilities,
+            'image_url': self.image_url
         }
 
     def __str__(self):

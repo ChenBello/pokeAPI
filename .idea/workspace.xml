@@ -5,10 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="06c8cf9c-5543-4470-a515-fa27062435f2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pokemons.json" beforeDir="false" afterPath="$PROJECT_DIR$/Pokemons.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Pokemons.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Pokemons.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apiHandling.py" beforeDir="false" afterPath="$PROJECT_DIR$/apiHandling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manifulateFile.py" beforeDir="false" afterPath="$PROJECT_DIR$/manifulateFile.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pokemon.py" beforeDir="false" afterPath="$PROJECT_DIR$/pokemon.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -20,6 +22,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -47,15 +50,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.apiHandling.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pokemon.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "Python.apiHandling.executor": "Run",
+    "Python.app.executor": "Run",
+    "Python.pokemon.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
