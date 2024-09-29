@@ -30,8 +30,12 @@ jobs:
           if [ -z "$EXISTING_KEY" ]; then
             aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
             chmod 400 ${KEY_PAIR_NAME}.pem
+            echo "::add-mask::$(cat ${KEY_PAIR_NAME}.pem)" # Mask the key in logs
+            echo "KEY_PAIR=${KEY_PAIR_NAME}" >> $GITHUB_ENV  # Save KEY_PAIR variable
+            echo "KEY_MATERIAL=$(cat ${KEY_PAIR_NAME}.pem)" >> $GITHUB_ENV # Save key material
+          else
+            echo "KEY_PAIR=${KEY_PAIR_NAME}" >> $GITHUB_ENV
           fi
-          echo "KEY_PAIR=${KEY_PAIR_NAME}" >> $GITHUB_ENV  # Save KEY_PAIR variable
 
       - name: Check if Security Group exists
         id: sg-check
@@ -58,7 +62,6 @@ jobs:
         run: |
           AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" "Name=architecture,Values=x86_64" --query "Images[?contains(Name, 'amzn2-ami-hvm-')].[ImageId]" --output text | head -n 1)
           echo "AMI_ID=${AMI_ID}" >> $GITHUB_ENV
-
 
       - name: Create EC2 Instance if Not Exists
         if: env.INSTANCE_ID == ''
@@ -89,7 +92,7 @@ jobs:
         with:
           host: ${{ env.PUBLIC_DNS }}
           username: ec2-user  # Adjust depending on your AMI
-          key: ${{ secrets.KEY_PAIR }}  # Assuming the key is saved as a secret
+          key: ${{ env.KEY_MATERIAL }}  # Using the generated key material
           script: |
             sudo yum update -y
             sudo yum install python3 -y
@@ -102,9 +105,6 @@ jobs:
             mkdir -p /home/ec2-user/flaskapp
             cd /home/ec2-user/flaskapp
             
-            # # Deploy your Flask app
-            # cat ./app.py > app.py
-
             # Deploy your Flask app
             cat << 'EOF' > /home/ec2-user/flaskapp/app.py
             from flask import Flask, render_template
@@ -141,19 +141,19 @@ jobs:
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
                         
-                        # Start Gunicorn service
-                        sudo systemctl start flaskapp
-                        sudo systemctl enable flaskapp
+            # Start Gunicorn service
+            sudo systemctl start flaskapp
+            sudo systemctl enable flaskapp
                         
-                        # Configure Nginx
-                        echo 'server {
-                            listen 80;
-                            server_name '${{ env.PUBLIC_DNS }}';
-                            location / {
-                                include proxy_params;
-                                proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
-                            }
-                        }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
+            # Configure Nginx
+            echo 'server {
+                listen 80;
+                server_name '${{ env.PUBLIC_DNS }}';
+                location / {
+                    include proxy_params;
+                    proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
+                }
+            }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
                         
-                        sudo nginx -t
-                        sudo systemctl restart nginx
+            sudo nginx -t
+            sudo systemctl restart nginx
