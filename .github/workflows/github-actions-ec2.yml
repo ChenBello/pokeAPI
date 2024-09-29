@@ -56,8 +56,9 @@ jobs:
       - name: Find Amazon Linux 2 AMI ID
         id: ami-find
         run: |
-          AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" --query "Images[*].ImageId" --output text | head -n 1)
+          AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" "Name=architecture,Values=x86_64" --query "Images[?contains(Name, 'amzn2-ami-hvm-')].[ImageId]" --output text | head -n 1)
           echo "AMI_ID=${AMI_ID}" >> $GITHUB_ENV
+
 
       - name: Create EC2 Instance if Not Exists
         if: env.INSTANCE_ID == ''
