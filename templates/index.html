@@ -4,19 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Pokémon</title>
+    <style>
+        /* הגדרת סגנון עבור גוף הדף */
+        body {
+            margin: 0;
+            height: 100vh; /* הגדרת גובה מסך מלא */
+            display: flex;
+            justify-content: center; /* מרכז אופקית */
+            align-items: center; /* מרכז אנכית */
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0; /* רקע בהיר */
+        }
+
+        /* הגדרת סגנון לתיבת התוכן */
+        .content {
+            text-align: center; /* ממרכז את הטקסט */
+            background-color: #fff; /* רקע לבן */
+            padding: 20px;
+            border-radius: 10px; /* פינות מעוגלות */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* הצללה קלה */
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-    <h1>Random Pokémon</h1>
-    {% if pokemon %}
-        <h2>Name: {{ pokemon['name'] }}</h2>
-        <h3>ID: {{ pokemon['id'] }}</h3>
-        <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3>
-        <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" />
-    {% else %}
-        <p>No Pokémon found!</p>
-    {% endif %}
-    <form method="get" action="/">
-        <button type="submit">Get Random Pokémon</button>
-    </form>
+    <div class="content">
+        <h1>Random Pokémon</h1>
+        {% if pokemon %}
+            <h2>Name: {{ pokemon['name'] }}</h2>
+            <h3>ID: {{ pokemon['id'] }}</h3>
+            <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3>
+            <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" />
+        {% else %}
+            <p>No Pokémon found!</p>
+        {% endif %}
+        <form method="get" action="/">
+            <button type="submit">Get Random Pokémon</button>
+        </form>
+    </div>
 </body>
 </html>
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Random Pokémon</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--    <h1>Random Pokémon</h1>-->
+<!--    {% if pokemon %}-->
+<!--        <h2>Name: {{ pokemon['name'] }}</h2>-->
+<!--        <h3>ID: {{ pokemon['id'] }}</h3>-->
+<!--        <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3>-->
+<!--        <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" />-->
+<!--    {% else %}-->
+<!--        <p>No Pokémon found!</p>-->
+<!--    {% endif %}-->
+<!--    <form method="get" action="/">-->
+<!--        <button type="submit">Get Random Pokémon</button>-->
+<!--    </form>-->
+<!--</body>-->
+<!--</html>-->
