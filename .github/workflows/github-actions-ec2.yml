@@ -3,7 +3,7 @@ name: Deploy Flask App to EC2
 on:
   push:
     branches:
-      - master  # Trigger when pushing to the main branch
+      - main  # Trigger when pushing to the main branch
 
 jobs:
   create-ec2-deploy:
@@ -19,6 +19,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Added because it is temporary 
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Check if Key Pair exists
@@ -54,16 +55,28 @@ jobs:
           INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=FlaskApp" --query "Reservations[*].Instances[*].InstanceId" --output text)
           echo "::set-output name=instance_id::$INSTANCE_ID"
 
+      - name: Create Security Group if Not Exists
+        id: sg-create
+        run: |
+          SG_ID=$(aws ec2 create-security-group --group-name FlaskAppSG --description "Security group for Flask app" --query "GroupId" --output text)
+          echo "::set-output name=sg_id::$SG_ID"
+
+      - name: Create Subnet if Not Exists
+        id: subnet-create
+        run: |
+          SUBNET_ID=$(aws ec2 create-subnet --vpc-id vpc-xxxxxxxx --cidr-block 10.0.1.0/24 --availability-zone us-east-1a --query "Subnet.SubnetId" --output text)
+          echo "::set-output name=subnet_id::$SUBNET_ID"
+
       - name: Create EC2 Instance if Not Exists
         if: steps.ec2-check.outputs.instance_id == ''
         id: ec2-create
         run: |
           INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id ami-0abcdef1234567890  # Replace with Amazon Linux AMI ID
+            --image-id ami-08d8ac128e0a1b91c # Replace with Amazon Linux AMI ID
             --instance-type t2.micro \
             --key-name ${{ steps.keypair-check.outputs.key_pair }} \
             --security-group-ids ${{ steps.sg-check.outputs.sg_id }} \
-            --subnet-id subnet-xxxxxxxx \
+            --subnet-id ${{ steps.subnet-create.outputs.subnet_id }} \
             --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FlaskApp}]' \
             --query "Instances[0].InstanceId" \
             --output text)
