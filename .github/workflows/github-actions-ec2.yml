@@ -31,20 +31,24 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             # Update packages
-            sudo yum -y update  
+            # sudo yum -y update  
 
             # Install Apache
-            sudo yum install -y httpd  
+            # sudo yum install -y httpd  
             
             # Start Apache
-            sudo systemctl start httpd  
+            # sudo systemctl start httpd  
 
             # Enable Apache to start on boot
-            sudo systemctl enable httpd  
+            # sudo systemctl enable httpd  
 
             # Move website files to the Apache web root
             cd home
             sudo rm -rf /var/www/html/*
-            sudo mv -u * /var/www/html
+            # sudo mv -u * /var/www/html
 
             # sudo mv * /var/www/html  
+            sudo yum remove httpd -y
+            sudo rm -rf /etc/httpd
+            sudo rm -rf /var/www/html
+
