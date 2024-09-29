@@ -107,10 +107,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
       
       - name: Connect to EC2 and run command
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} "uptime"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} "uptime"
+
 
       - name: Install Python, Gunicorn, Nginx and Setup Flask App
         uses: appleboy/ssh-action@master
