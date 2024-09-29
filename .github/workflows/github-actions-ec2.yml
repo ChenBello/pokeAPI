@@ -19,7 +19,6 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Check if Key Pair exists
@@ -88,7 +87,7 @@ jobs:
         with:
           host: ${{ env.PUBLIC_DNS }}
           username: ec2-user  # Adjust depending on your AMI
-          key: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Assuming key file is saved as a secret
+          key: ${{ secrets.KEY_PAIR }}  # Assuming the key is saved as a secret
           script: |
             sudo yum update -y
             sudo yum install python3 -y
@@ -96,11 +95,34 @@ jobs:
             sudo pip3 install gunicorn flask
             sudo systemctl start nginx
             sudo systemctl enable nginx
+            
             # Create a folder for Flask app
             mkdir -p /home/ec2-user/flaskapp
             cd /home/ec2-user/flaskapp
+            
             # Deploy your Flask app (Replace this with your actual app deployment commands)
-            echo "${{ github.event.head_commit.message }}" > app.py
+            echo "from flask import Flask, render_template
+import json
+import random
+
+app = Flask(__name__)
+
+def get_random_pokemon():
+    with open('Pokemons.json', 'r') as file:
+        pokemons = json.load(file)
+        return random.choice(pokemons)
+
+@app.route('/')
+def index():
+    random_pokemon = get_random_pokemon()
+    return render_template('index.html', pokemon=random_pokemon)
+
+if __name__ == '__main__':
+    app.run(debug=True)" > app.py
+
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0')" > app.py
+            
             # Create systemd service for Gunicorn
             echo "[Unit]
             Description=Gunicorn instance to serve flaskapp
@@ -110,21 +132,24 @@ jobs:
             User=ec2-user
             Group=nginx
             WorkingDirectory=/home/ec2-user/flaskapp
-            Environment='PATH=/home/ec2-user/flaskapp/venv/bin'
-            ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:flaskapp.sock -m 007 app:app
+            ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/flaskapp/flaskapp.sock -m 007 app:app
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
+            
+            # Start Gunicorn service
             sudo systemctl start flaskapp
             sudo systemctl enable flaskapp
+            
             # Configure Nginx
             echo 'server {
                 listen 80;
-                server_name ${{ env.PUBLIC_DNS }};
+                server_name '${{ env.PUBLIC_DNS }}';
                 location / {
                     include proxy_params;
                     proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
                 }
             }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
+            
             sudo nginx -t
             sudo systemctl restart nginx
