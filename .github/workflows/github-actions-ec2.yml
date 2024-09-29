@@ -106,7 +106,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa.pub
+          chmod 700 ~/.ssh
 
       
       - name: Connect to EC2 and run command
