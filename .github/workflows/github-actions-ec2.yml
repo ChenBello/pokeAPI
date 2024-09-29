@@ -44,4 +44,4 @@ jobs:
 
             # Move website files to the Apache web root
             cd home
-            sudo mv */templates/* /var/www/html  
+            sudo mv * /var/www/html  
