@@ -101,8 +101,7 @@ jobs:
             cd /home/ec2-user/flaskapp
             
             # Deploy your Flask app
-                        # Deploy your Flask app
-            echo "
+            echo '
 from flask import Flask, render_template
 import json
 import random
@@ -110,19 +109,18 @@ import random
 app = Flask(__name__)
 
 def get_random_pokemon():
-    with open('Pokemons.json', 'r') as file:
+    with open("Pokemons.json", "r") as file:
         pokemons = json.load(file)
         return random.choice(pokemons)
 
-@app.route('/')
+@app.route("/")
 def index():
     random_pokemon = get_random_pokemon()
-    return render_template('index.html', pokemon=random_pokemon)
+    return render_template("index.html", pokemon=random_pokemon)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0')
-" > app.py
-
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
+' > app.py
 
             # Create systemd service for Gunicorn
             echo "[Unit]
