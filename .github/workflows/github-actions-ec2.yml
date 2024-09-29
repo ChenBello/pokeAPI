@@ -101,7 +101,9 @@ jobs:
             cd /home/ec2-user/flaskapp
             
             # Deploy your Flask app
-            echo "from flask import Flask, render_template
+                        # Deploy your Flask app
+            echo "
+from flask import Flask, render_template
 import json
 import random
 
@@ -118,7 +120,9 @@ def index():
     return render_template('index.html', pokemon=random_pokemon)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')" > app.py
+    app.run(host='0.0.0.0')
+" > app.py
+
 
             # Create systemd service for Gunicorn
             echo "[Unit]
