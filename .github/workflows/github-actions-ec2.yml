@@ -47,33 +47,60 @@ jobs:
       #     fi
       #     echo "KEY_PAIR=${KEY_PAIR_NAME}" >> $GITHUB_ENV
 
-
+      - name: Check if EC2 instance exists
+        id: ec2-check
+        run: |
+            INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=FlaskApp" --query "Reservations[*].Instances[*].InstanceId" --output text)
+            echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
+      
       - name: Check if Key Pair exists
         id: keypair-check
+        if: env.INSTANCE_ID != ''
         run: |
           KEY_PAIR_NAME="${{ secrets.KEY_PAIR_NAME }}"
           EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
-          
           if [ -z "$EXISTING_KEY" ]; then
             echo "Creating new Key Pair..."
             aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-            
             if [ $? -ne 0 ]; then
                 echo "Failed to create Key Pair" >&2
                 exit 1
             fi
-            
             chmod 400 ${KEY_PAIR_NAME}.pem || exit 1
             echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
-
+            
             # Save the private key as a GitHub secret
             echo "Adding private key to GitHub secrets..."
             gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
-          else
-            echo "Key Pair already exists."
           fi
-          
           echo "KEY_PAIR=${KEY_PAIR_NAME}" >> $GITHUB_ENV
+
+      # - name: Check if Key Pair exists
+      #   id: keypair-check
+      #   run: |
+      #     KEY_PAIR_NAME="${{ secrets.KEY_PAIR_NAME }}"
+      #     EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
+          
+      #     if [ -z "$EXISTING_KEY" ]; then
+      #       echo "Creating new Key Pair..."
+      #       aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
+            
+      #       if [ $? -ne 0 ]; then
+      #           echo "Failed to create Key Pair" >&2
+      #           exit 1
+      #       fi
+            
+      #       chmod 400 ${KEY_PAIR_NAME}.pem || exit 1
+      #       echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
+
+      #       # Save the private key as a GitHub secret
+      #       echo "Adding private key to GitHub secrets..."
+      #       gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
+      #     else
+      #       echo "Key Pair already exists."
+      #     fi
+          
+      #     echo "KEY_PAIR=${KEY_PAIR_NAME}" >> $GITHUB_ENV
 
 
       - name: Check if Security Group exists
@@ -90,11 +117,11 @@ jobs:
             echo "SG_ID=${EXISTING_SG}" >> $GITHUB_ENV
           fi
 
-      - name: Check if EC2 instance exists
-        id: ec2-check
-        run: |
-          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=FlaskApp" --query "Reservations[*].Instances[*].InstanceId" --output text)
-          echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
+      # - name: Check if EC2 instance exists
+      #   id: ec2-check
+      #   run: |
+      #     INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=FlaskApp" --query "Reservations[*].Instances[*].InstanceId" --output text)
+      #     echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
 
       - name: Find Amazon Linux 2 AMI ID
         id: ami-find
@@ -137,11 +164,24 @@ jobs:
           username: ec2-user  # Adjust depending on your AMI
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Update system and install necessary packages
             sudo yum update -y
             sudo yum install python3 python3-devel git -y
             sudo yum install nginx -y
             sudo pip3 install --upgrade pip
             sudo pip3 install gunicorn flask
+            
+            # Create .ssh directory if it does not exist
+            mkdir -p ~/.ssh
+            
+            # Add your public key to authorized_keys
+            echo "YOUR_PUBLIC_SSH_KEY_HERE" >> ~/.ssh/authorized_keys
+            
+            # Update permissions
+            chmod 640 ~/.ssh/authorized_keys
+            chmod 700 ~/.ssh
+            
+            # Start and enable nginx
             sudo systemctl start nginx
             sudo systemctl enable nginx
             
