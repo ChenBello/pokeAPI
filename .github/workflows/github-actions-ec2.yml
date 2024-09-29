@@ -99,8 +99,9 @@ jobs:
           script: |
             set -x  # Enable debugging
             sudo yum update -y
-            sudo yum install python3 -y
-            sudo amazon-linux-extras install nginx1 -y
+            sudo yum install python3 python3-devel -y
+            sudo yum install nginx -y
+            sudo pip3 install --upgrade pip
             sudo pip3 install gunicorn flask
             sudo systemctl start nginx
             sudo systemctl enable nginx
@@ -144,7 +145,7 @@ jobs:
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
-                        
+            
             # Start Gunicorn service
             sudo systemctl start flaskapp
             sudo systemctl enable flaskapp
@@ -161,3 +162,4 @@ jobs:
                         
             sudo nginx -t
             sudo systemctl restart nginx
+
