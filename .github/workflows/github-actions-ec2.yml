@@ -118,7 +118,11 @@ jobs:
           ssh-add ~/.ssh/id_rsa
 
 
-      
+      - name: Add SSH public key to authorized_keys
+        run: |
+          echo "${{ secrets.EC2_SSH_PUBLIC_KEY }}" >> ~/.ssh/authorized_keys
+          chmod 600 ~/.ssh/authorized_keys
+
       - name: Connect to EC2 and run command
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} "uptime"
