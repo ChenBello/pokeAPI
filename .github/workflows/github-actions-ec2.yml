@@ -1,54 +1,127 @@
-name: Push-to-EC2
+name: Deploy Flask App to EC2
 
-# Trigger deployment only on push to main branch
 on:
   push:
     branches:
-      - master
+      - master  # Trigger when pushing to the main branch
 
 jobs:
-  deploy:
-    name: Deploy to EC2 on master branch push
+  create-ec2-deploy:
+    name: Create EC2 and Deploy Flask App
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout the files
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Deploy to Server 1
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: ${{ secrets.TARGET_DIR }}
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Executing remote ssh commands using ssh key
+      - name: Check if Key Pair exists
+        id: keypair-check
+        run: |
+          KEY_PAIR_NAME="MyKeyPair"
+          EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
+          if [ -z "$EXISTING_KEY" ]; then
+            aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
+            chmod 400 ${KEY_PAIR_NAME}.pem
+            echo "::set-output name=key_pair::$KEY_PAIR_NAME.pem"
+          else
+            echo "::set-output name=key_pair::$KEY_PAIR_NAME.pem"
+          fi
+
+      - name: Check if Security Group exists
+        id: sg-check
+        run: |
+          SECURITY_GROUP_NAME="FlaskAppSG"
+          EXISTING_SG=$(aws ec2 describe-security-groups --group-names $SECURITY_GROUP_NAME --query 'SecurityGroups[0].GroupId' --output text || echo "")
+          if [ -z "$EXISTING_SG" ]; then
+            SG_ID=$(aws ec2 create-security-group --group-name $SECURITY_GROUP_NAME --description "Security group for Flask app" --output text)
+            echo "::set-output name=sg_id::$SG_ID"
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0  # Allow SSH
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0  # Allow HTTP
+          else
+            echo "::set-output name=sg_id::$EXISTING_SG"
+          fi
+
+      - name: Check if EC2 instance exists
+        id: ec2-check
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=FlaskApp" --query "Reservations[*].Instances[*].InstanceId" --output text)
+          echo "::set-output name=instance_id::$INSTANCE_ID"
+
+      - name: Create EC2 Instance if Not Exists
+        if: steps.ec2-check.outputs.instance_id == ''
+        id: ec2-create
+        run: |
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ami-0abcdef1234567890  # Replace with Amazon Linux AMI ID
+            --instance-type t2.micro \
+            --key-name ${{ steps.keypair-check.outputs.key_pair }} \
+            --security-group-ids ${{ steps.sg-check.outputs.sg_id }} \
+            --subnet-id subnet-xxxxxxxx \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FlaskApp}]' \
+            --query "Instances[0].InstanceId" \
+            --output text)
+          echo "::set-output name=instance_id::$INSTANCE_ID"
+
+      - name: Wait for EC2 instance to be running
+        run: |
+          aws ec2 wait instance-running --instance-ids ${{ steps.ec2-create.outputs.instance_id || steps.ec2-check.outputs.instance_id }}
+
+      - name: Get EC2 public DNS
+        id: ec2-dns
+        run: |
+          PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ steps.ec2-create.outputs.instance_id || steps.ec2-check.outputs.instance_id }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
+          echo "::set-output name=public_dns::$PUBLIC_DNS"
+        shell: bash
+
+      - name: Install Python, Gunicorn, Nginx and Setup Flask App
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ steps.ec2-dns.outputs.public_dns }}
+          username: ec2-user  # Adjust depending on your AMI
+          key: ${{ steps.keypair-check.outputs.key_pair }}
           script: |
-            # Update packages
-            # sudo yum -y update  
+            sudo yum update -y
+            sudo yum install python3 -y
+            sudo amazon-linux-extras install nginx1 -y
+            sudo pip3 install gunicorn flask
+            sudo systemctl start nginx
+            sudo systemctl enable nginx
+            # Create a folder for Flask app
+            mkdir -p /home/ec2-user/flaskapp
+            cd /home/ec2-user/flaskapp
+            # Deploy your Flask app (Replace this with your actual app deployment commands)
+            echo "${{ github.event.head_commit.message }}" > app.py
+            # Create systemd service for Gunicorn
+            echo "[Unit]
+            Description=Gunicorn instance to serve flaskapp
+            After=network.target
 
-            # Install Apache
-            # sudo yum install -y httpd  
-            
-            # Start Apache
-            # sudo systemctl start httpd  
+            [Service]
+            User=ec2-user
+            Group=nginx
+            WorkingDirectory=/home/ec2-user/flaskapp
+            Environment='PATH=/home/ec2-user/flaskapp/venv/bin'
+            ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:flaskapp.sock -m 007 app:app
 
-            # Enable Apache to start on boot
-            # sudo systemctl enable httpd  
-
-            # Move website files to the Apache web root
-            cd home
-            sudo rm -rf /var/www/html/*
-            # sudo mv -u * /var/www/html
-
-            # sudo mv * /var/www/html  
-            sudo yum remove httpd -y
-            sudo rm -rf /etc/httpd
-            sudo rm -rf /var/www/html
-
+            [Install]
+            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
+            sudo systemctl start flaskapp
+            sudo systemctl enable flaskapp
+            # Configure Nginx
+            echo 'server {
+                listen 80;
+                server_name ${{ steps.ec2-dns.outputs.public_dns }};
+                location / {
+                    include proxy_params;
+                    proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
+                }
+            }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
+            sudo nginx -t
+            sudo systemctl restart nginx
