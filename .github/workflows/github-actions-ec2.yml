@@ -49,35 +49,40 @@ jobs:
             echo "::set-output name=sg_id::$EXISTING_SG"
           fi
 
-      - name: Check if Subnet exists
-        id: subnet-check
-        run: |
-          SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=FlaskAppSubnet" --query "Subnets[0].SubnetId" --output text || echo "")
-          if [ -z "$SUBNET_ID" ]; then
-            SUBNET_ID=$(aws ec2 create-subnet --vpc-id vpc-xxxxxxxx --cidr-block 10.0.1.0/24 --availability-zone us-east-1a --query "Subnet.SubnetId" --output text)
-            echo "::set-output name=subnet_id::$SUBNET_ID"
-            # Tag the subnet for identification
-            aws ec2 create-tags --resources $SUBNET_ID --tags Key=Name,Value=FlaskAppSubnet
-          else
-            echo "::set-output name=subnet_id::$SUBNET_ID"
-          fi
-
       - name: Check if EC2 instance exists
         id: ec2-check
         run: |
           INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=FlaskApp" --query "Reservations[*].Instances[*].InstanceId" --output text)
           echo "::set-output name=instance_id::$INSTANCE_ID"
 
+      - name: Create Security Group if Not Exists
+        id: sg-create
+        run: |
+          SG_ID=$(aws ec2 create-security-group --group-name FlaskAppSG --description "Security group for Flask app" --query "GroupId" --output text)
+          echo "::set-output name=sg_id::$SG_ID"
+
+      - name: Create Subnet if Not Exists
+        id: subnet-create
+        run: |
+          SUBNET_ID=$(aws ec2 create-subnet --vpc-id vpc-xxxxxxxx --cidr-block 10.0.1.0/24 --availability-zone us-east-1a --query "Subnet.SubnetId" --output text)
+          echo "::set-output name=subnet_id::$SUBNET_ID"
+
+      - name: Find Amazon Linux 2 AMI ID
+        id: ami-find
+        run: |
+          AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" --query "Images[*].ImageId" --output text | head -n 1)
+          echo "::set-output name=ami_id::$AMI_ID"
+
       - name: Create EC2 Instance if Not Exists
         if: steps.ec2-check.outputs.instance_id == ''
         id: ec2-create
         run: |
           INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id ami-08d8ac128e0a1b91c \ # Replace with Amazon Linux AMI ID
+            --image-id ${{ steps.ami-find.outputs.ami_id }} \
             --instance-type t2.micro \
             --key-name ${{ steps.keypair-check.outputs.key_pair }} \
             --security-group-ids ${{ steps.sg-check.outputs.sg_id }} \
-            --subnet-id ${{ steps.subnet-check.outputs.subnet_id }} \
+            --subnet-id ${{ steps.subnet-create.outputs.subnet_id }} \
             --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FlaskApp}]' \
             --query "Instances[0].InstanceId" \
             --output text)
