@@ -157,6 +157,15 @@ jobs:
         run: |
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+      
+      - name: Connect to EC2 and run command
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} "uptime"
 
       - name: Install Python, Gunicorn, Nginx and Setup Flask App
         uses: appleboy/ssh-action@master
