@@ -3,7 +3,7 @@ name: Deploy Flask App to EC2
 on:
   push:
     branches:
-      - main  # Trigger when pushing to the main branch
+      - master  # Trigger when pushing to the main branch
 
 jobs:
   create-ec2-deploy:
