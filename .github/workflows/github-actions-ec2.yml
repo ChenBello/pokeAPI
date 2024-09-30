@@ -1,9 +1,9 @@
 name: Deploy Flask App to EC2
 
-on:
-  push:
-    branches:
-      - master  # Trigger when pushing to the main branch
+on: workflow_dispatch
+  # push:
+    # branches:
+      # - master  # Trigger when pushing to the main branch
 
 jobs:
   create-ec2-deploy:
