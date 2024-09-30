@@ -24,6 +24,9 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-west-2
 
+      - name: Add EC2 to known_hosts
+        run: ssh-keyscan -H ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
+
       - name: Check if Key Pair exists
         id: keypair-check
         run: |
