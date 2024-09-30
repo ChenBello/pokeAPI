@@ -24,9 +24,6 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-west-2
 
-      - name: Check GitHub CLI installation
-        run: gh --version
-
       - name: Check if Key Pair exists
         id: keypair-check
         run: |
@@ -35,10 +32,6 @@ jobs:
           if [ -z "$EXISTING_KEY" ]; then
             echo "Creating new Key Pair..."
             aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-            if [ $? -ne 0 ]; then
-              echo "Failed to create Key Pair" >&2
-              exit 1
-            fi
             chmod 400 ${KEY_PAIR_NAME}.pem || exit 1
             echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
             echo "Adding private key to GitHub secrets..."
@@ -91,11 +84,6 @@ jobs:
         run: |
           aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
 
-      - name: Confirm EC2 instance is running
-        run: |
-          aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
-          echo "EC2 instance is running with ID: ${{ env.INSTANCE_ID }}"
-
       - name: Get EC2 public DNS
         id: ec2-dns
         run: |
@@ -104,47 +92,18 @@ jobs:
 
       - name: Set up SSH
         run: |
-          # Ensure ssh-agent is installed
           command -v ssh-agent >/dev/null || ( sudo apt-get update -y && sudo apt-get install openssh-client -y )
-      
-          # Start the ssh-agent
           eval $(ssh-agent -s)
-      
-          # Create .ssh directory with correct permissions
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-      
-          # Save the private SSH key to a file
           echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa  # Set the right permissions
-      
-          # Create config and known_hosts files
+          chmod 600 ~/.ssh/id_rsa
           touch ~/.ssh/config
           touch ~/.ssh/known_hosts
-      
-          # Set permissions for the config and known_hosts files
           chmod 644 ~/.ssh/config
           chmod 644 ~/.ssh/known_hosts
-      
-          # Debug: Print the PUBLIC_DNS value
-          echo "Adding host to known_hosts: ${{ env.PUBLIC_DNS }}"
-      
-          # Add the target host to known_hosts
           ssh-keyscan -H ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
-      
-          # Disable strict host key checking
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config
-
-      - name: Deploy to EC2
-        run: |
-          ssh -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ env.PUBLIC_DNS }}
-          # ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-          # Ensure the latest code is pulled from GitHub
-          cd ~/flaskapp  # Change to your app's directory
-          git pull origin master
-          # Restart the application if needed
-          sudo systemctl restart flaskapp || echo "Failed to restart flaskapp"
-          EOF
 
       - name: Connect via SSH and configure Flask app
         run: |
@@ -192,4 +151,4 @@ jobs:
 
       - name: Add usage instructions on login
         run: |
-          echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp'." | sudo tee /etc
+          echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp
