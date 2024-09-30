@@ -110,6 +110,10 @@ jobs:
       - name: Wait for EC2 instance to be running
         run: |
           aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
+      - name: Confirm EC2 instance is running
+        run: |
+          aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
+          echo "EC2 instance is running with ID: ${{ env.INSTANCE_ID }}"
 
       - name: Get EC2 public DNS
         id: ec2-dns
@@ -129,8 +133,10 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa.pub
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa.pub
 
       # - name: Add SSH public key to authorized_keys
       #   run: |
@@ -146,7 +152,12 @@ jobs:
 
       - name: Connect via SSH and deploy Flask app
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -v ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -v ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          # Commands to execute on the remote server
+          echo "Connected to EC2 Instance"
+          # You can add more commands here
+          EOF
+
             sudo yum update -y
             sudo yum install python3 python3-devel git -y
             sudo yum install nginx -y
@@ -182,7 +193,13 @@ jobs:
             sudo nginx -t
             sudo systemctl restart nginx
           EOF
+      - name: Test if the app is running
+        run: |
+          curl -I http://${{ env.PUBLIC_DNS }} || echo "Failed to connect to the app"
 
+      - name: Add usage instructions on login
+        run: |
+          echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp'." | sudo tee /etc/motd
       # - name: Connect via SSH and deploy Flask app
       #   run: |
       #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
