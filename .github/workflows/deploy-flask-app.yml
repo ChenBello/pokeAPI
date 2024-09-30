@@ -1,0 +1,81 @@
+name: Deploy Flask App to EC2
+
+on:
+  push:
+    branches:
+      - master  # Trigger when pushing to the main branch
+
+jobs:
+  deploy-flask-app:
+    name: Deploy Flask App to EC2
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Provide authentication for GitHub CLI
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Set up SSH
+        run: |
+          command -v ssh-agent >/dev/null || ( sudo apt-get update -y && sudo apt-get install openssh-client -y )
+          eval $(ssh-agent -s)
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          touch ~/.ssh/config
+          chmod 644 ~/.ssh/config
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config
+          ssh-keyscan -H ${{ secrets.PUBLIC_DNS }} >> ~/.ssh/known_hosts
+
+      - name: Connect via SSH and configure Flask app
+        run: |
+          ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ secrets.PUBLIC_DNS }} << 'EOF'
+          echo "Connected to EC2 Instance"
+          sudo yum update -y
+          sudo yum install python3 python3-devel git -y
+          sudo yum install nginx -y
+          sudo pip3 install flask gunicorn
+          mkdir -p ~/flaskapp
+          cd ~/flaskapp
+          git clone https://github.com/ChenBello/pokeAPI.git .  # Replace with your repo
+          sudo systemctl start nginx
+          sudo systemctl enable nginx
+          sudo touch /etc/systemd/system/flaskapp.service
+          echo "[Unit]
+          Description=Gunicorn instance to serve flaskapp
+          After=network.target
+
+          [Service]
+          User=ec2-user
+          Group=nginx
+          WorkingDirectory=/home/ec2-user/flaskapp
+          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/flaskapp/flaskapp.sock -m 007 app:app
+
+          [Install]
+          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
+          sudo systemctl start flaskapp
+          sudo systemctl enable flaskapp
+          echo 'server {
+              listen 80;
+              server_name '${{ secrets.PUBLIC_DNS }}';
+              location / {
+                  include proxy_params;
+                  proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
+              }
+          }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
+          sudo nginx -t
+          sudo systemctl restart nginx
+          EOF
+
+      - name: Test if the app is running
+        run: |
+          curl -I http://${{ secrets.PUBLIC_DNS }} || echo "Failed to connect to the app"
