@@ -21,7 +21,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} 
           aws-region: ${{ secrets.AWS_REGION }}
-          
+
       - name: Check GitHub CLI installation
         run: |
           gh --version
@@ -34,16 +34,11 @@ jobs:
           if [ -z "$EXISTING_KEY" ]; then
             echo "Creating new Key Pair..."
             aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-            if [ $? -ne 0 ]; then
-              echo "Failed to create Key Pair" >&2
-              exit 1
-            fi
-            chmod 400 ${KEY_PAIR_NAME}.pem || exit 1
+            chmod 400 ${KEY_PAIR_NAME}.pem
             echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
-            
-            # Save the private key as a GitHub secret
+
             echo "Adding private key to GitHub secrets..."
-            gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
+            gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem
           fi
 
       - name: Check if EC2 instance exists
@@ -53,7 +48,7 @@ jobs:
             if [ -n "$INSTANCE_ID" ]; then
               echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
             fi
-      
+
       - name: Check if Security Group exists
         id: sg-check
         run: |
@@ -86,10 +81,6 @@ jobs:
             --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FlaskApp}]' \
             --query "Instances[0].InstanceId" \
             --output text)
-          if [ $? -ne 0 ]; then
-            echo "Error creating EC2 instance" >&2
-            exit 1
-          fi
           echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
 
       - name: Wait for EC2 instance to be running
@@ -104,68 +95,31 @@ jobs:
           
       - name: Setup SSH
         run: |
-          # Create the .ssh directory if it doesn't exist
           mkdir -p ~/.ssh
-          # Set the permissions for the .ssh directory
           chmod 700 ~/.ssh
-          # Create the private key file from the secret
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          # Set permissions for the private key file
           chmod 600 ~/.ssh/id_rsa
-          # Start the SSH agent
           eval "$(ssh-agent -s)"
-          # Add the private key to the SSH agent
           ssh-add ~/.ssh/id_rsa
-
 
       - name: Add SSH public key to authorized_keys
         run: |
           echo "${{ secrets.EC2_SSH_PUBLIC_KEY }}" >> ~/.ssh/authorized_keys
           chmod 600 ~/.ssh/authorized_keys
 
-      - name: Connect to EC2 and run command
+      - name: Connect via SSH and deploy Flask app
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} "uptime"
-
-
-      - name: Install Python, Gunicorn, Nginx and Setup Flask App
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.PUBLIC_DNS }}
-          username: ec2-user  # Adjust depending on your AMI
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            # Update system and install necessary packages
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
             sudo yum update -y
             sudo yum install python3 python3-devel git -y
             sudo yum install nginx -y
-            sudo pip3 install --upgrade pip
-            sudo pip3 install gunicorn flask
-            
-            # Create .ssh directory if it does not exist
-            mkdir -p ~/.ssh
-            
-            # Add your public key to authorized_keys
-            echo "YOUR_PUBLIC_SSH_KEY_HERE" >> ~/.ssh/authorized_keys
-            
-            # Update permissions
-            chmod 640 ~/.ssh/authorized_keys
-            chmod 700 ~/.ssh
-            
-            # Start and enable nginx
+            sudo pip3 install flask gunicorn
+            mkdir -p ~/flaskapp
+            cd ~/flaskapp
+            git clone https://github.com/ChenBello/pokeAPI.git .  # Replace with your repo
             sudo systemctl start nginx
             sudo systemctl enable nginx
-            
-            # Create a folder for Flask app
-            mkdir -p /home/ec2-user/flaskapp
-            cd /home/ec2-user/flaskapp
-            if [ -d ".git" ]; then
-                git pull origin master  
-            else
-                git clone https://github.com/ChenBello/pokeAPI.git .  # Make sure your repo is accessible
-            fi
-
-            # Create systemd service for Gunicorn
+            sudo touch /etc/systemd/system/flaskapp.service
             echo "[Unit]
             Description=Gunicorn instance to serve flaskapp
             After=network.target
@@ -178,23 +132,19 @@ jobs:
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
-            
-            # Start Gunicorn service
             sudo systemctl start flaskapp
             sudo systemctl enable flaskapp
-                        
-            # Configure Nginx
             echo 'server {
                 listen 80;
-                server_name '${{ env.PUBLIC_DNS }}';
+                server_name ${PUBLIC_DNS};
                 location / {
                     include proxy_params;
                     proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
                 }
             }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
-                        
             sudo nginx -t
             sudo systemctl restart nginx
+          EOF
 
       - name: Test if the app is running
         run: |
