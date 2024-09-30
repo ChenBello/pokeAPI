@@ -130,8 +130,11 @@ jobs:
           chmod 644 ~/.ssh/config
           chmod 644 ~/.ssh/known_hosts
       
+          # Debug: Print the PUBLIC_DNS value
+          echo "Adding host to known_hosts: ${{ secrets.PUBLIC_DNS }}"
+      
           # Add the target host to known_hosts
-          ssh-keyscan ${{ secrets.PUBLIC_DNS }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.PUBLIC_DNS }} >> ~/.ssh/known_hosts
       
           # Disable strict host key checking
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config
