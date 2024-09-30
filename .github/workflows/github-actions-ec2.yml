@@ -22,7 +22,8 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-west-2
+          # aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Check GitHub CLI installation
         run: |
@@ -109,26 +110,39 @@ jobs:
         run: |
           # Ensure ssh-agent is installed
           command -v ssh-agent >/dev/null || ( sudo apt-get update -y && sudo apt-get install openssh-client -y )
-          
+
           # Start the ssh-agent
           eval $(ssh-agent -s)
-          
-          # Add the private SSH key to the agent
-          echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' | ssh-add -
-          
-          # Create .ssh directory and necessary files
+
+          # Create .ssh directory with correct permissions
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Add the private SSH key to the agent
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+
+          # Create config and known_hosts files
           touch ~/.ssh/config
           touch ~/.ssh/known_hosts
-          
+
           # Set permissions for the .ssh directory and its contents
-          chmod -R 400 ~/.ssh
-          
+          chmod 600 ~/.ssh/id_rsa
+          chmod 644 ~/.ssh/config
+          chmod 644 ~/.ssh/known_hosts
+
           # Add the target host to known_hosts
-          ssh-keyscan ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
-          
+          ssh-keyscan ${{ secrets.PUBLIC_DNS }} >> ~/.ssh/known_hosts
+
           # Disable strict host key checking
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config
+
+      - name: Deploy to EC2
+        run: |
+          ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ secrets.PUBLIC_DNS }} << 'EOF'
+          cd app.py  # Change this to your app's directory
+          git pull origin master
+          # Add any additional deployment commands here, e.g., restarting the server
+          EOF
 
       - name: Connect via SSH and deploy Flask app
         run: |
