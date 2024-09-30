@@ -105,28 +105,35 @@ jobs:
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
           
-      # - name: Setup SSH
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     chmod 700 ~/.ssh
-      #     echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-      #     chmod 600 ~/.ssh/id_rsa
-      - name: Set up SSH keys
+      - name: Set up SSH
         run: |
+          # Ensure ssh-agent is installed
+          command -v ssh-agent >/dev/null || ( sudo apt-get update -y && sudo apt-get install openssh-client -y )
+          
+          # Start the ssh-agent
+          eval $(ssh-agent -s)
+          
+          # Add the private SSH key to the agent
+          echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' | ssh-add -
+          
+          # Create .ssh directory and necessary files
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/id_rsa
-          chmod 644 ~/.ssh/id_rsa.pub
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
+          touch ~/.ssh/config
+          touch ~/.ssh/known_hosts
+          
+          # Set permissions for the .ssh directory and its contents
+          chmod -R 400 ~/.ssh
+          
+          # Add the target host to known_hosts
+          ssh-keyscan ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
+          
+          # Disable strict host key checking
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config
 
       - name: Connect via SSH and deploy Flask app
         run: |
-         ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.PUBLIC_DNS }} << 'EOF'
+          ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           echo "Connected to EC2 Instance"
-          EOF
           sudo yum update -y
           sudo yum install python3 python3-devel git -y
           sudo yum install nginx -y
@@ -153,7 +160,7 @@ jobs:
           sudo systemctl enable flaskapp
           echo 'server {
               listen 80;
-              server_name '${PUBLIC_DNS}';
+              server_name '${{ env.PUBLIC_DNS }}';
               location / {
                   include proxy_params;
                   proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
