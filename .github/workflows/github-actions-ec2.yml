@@ -121,7 +121,8 @@ jobs:
         run: |
           ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
           echo "SSH Key generated."
-
+          
+      # Setting 700 to .ssh and 600 to authorized_keys solved the issue.
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -131,14 +132,21 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      - name: Add SSH public key to authorized_keys
+      # - name: Add SSH public key to authorized_keys
+      #   run: |
+      #     echo "${{ secrets.EC2_SSH_PUBLIC_KEY }}" >> ~/.ssh/authorized_keys
+      #     chmod 600 ~/.ssh/authorized_keys
+
+      - name: Generate SSH Key
         run: |
+          ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+          echo "SSH Key generated."
           echo "${{ secrets.EC2_SSH_PUBLIC_KEY }}" >> ~/.ssh/authorized_keys
           chmod 600 ~/.ssh/authorized_keys
 
       - name: Connect via SSH and deploy Flask app
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -v ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
             sudo yum update -y
             sudo yum install python3 python3-devel git -y
             sudo yum install nginx -y
@@ -175,10 +183,49 @@ jobs:
             sudo systemctl restart nginx
           EOF
 
-      - name: Test if the app is running
-        run: |
-          curl -I http://${{ env.PUBLIC_DNS }}
+      # - name: Connect via SSH and deploy Flask app
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+      #       sudo yum update -y
+      #       sudo yum install python3 python3-devel git -y
+      #       sudo yum install nginx -y
+      #       sudo pip3 install flask gunicorn
+      #       mkdir -p ~/flaskapp
+      #       cd ~/flaskapp
+      #       git clone https://github.com/ChenBello/pokeAPI.git .  # Replace with your repo
+      #       sudo systemctl start nginx
+      #       sudo systemctl enable nginx
+      #       sudo touch /etc/systemd/system/flaskapp.service
+      #       echo "[Unit]
+      #       Description=Gunicorn instance to serve flaskapp
+      #       After=network.target
 
-      - name: Add usage instructions on login
-        run: |
-          echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp'." | sudo tee /etc/motd
+      #       [Service]
+      #       User=ec2-user
+      #       Group=nginx
+      #       WorkingDirectory=/home/ec2-user/flaskapp
+      #       ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/flaskapp/flaskapp.sock -m 007 app:app
+
+      #       [Install]
+      #       WantedBy=multi-user.target" | sudo tee /etc/systemd/system/flaskapp.service
+      #       sudo systemctl start flaskapp
+      #       sudo systemctl enable flaskapp
+      #       echo 'server {
+      #           listen 80;
+      #           server_name ${PUBLIC_DNS};
+      #           location / {
+      #               include proxy_params;
+      #               proxy_pass http://unix:/home/ec2-user/flaskapp/flaskapp.sock;
+      #           }
+      #       }' | sudo tee /etc/nginx/conf.d/flaskapp.conf
+      #       sudo nginx -t
+      #       sudo systemctl restart nginx
+      #     EOF
+
+      # - name: Test if the app is running
+      #   run: |
+      #     curl -I http://${{ env.PUBLIC_DNS }}
+
+      # - name: Add usage instructions on login
+      #   run: |
+      #     echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp'." | sudo tee /etc/motd
