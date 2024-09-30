@@ -105,7 +105,7 @@ jobs:
 
       - name: Run setup script for Flask app
         run: |
-          ssh -i /tmp/ec2_key.pem ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -T /tmp/ec2_key.pem ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn
