@@ -191,4 +191,4 @@ jobs:
 
       - name: Add usage instructions on login
         run: |
-          echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp'." | sudo tee /
+          echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart flaskapp'." | sudo tee /etc
