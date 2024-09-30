@@ -100,11 +100,11 @@ jobs:
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
 
-      - name: Store EC2 private key in secrets for SSH
-        run: |
-          echo "${{ env.KEY_PAIR_NAME }}" > /tmp/ec2_key.pem
-          chmod 400 /tmp/ec2_key.pem
-          echo "Private key stored and ready for SSH."
+      # - name: Store EC2 private key in secrets for SSH
+      #   run: |
+      #     echo "${{ env.KEY_PAIR_NAME }}" > /tmp/ec2_key.pem
+      #     chmod 400 /tmp/ec2_key.pem
+      #     echo "Private key stored and ready for SSH."
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
@@ -113,17 +113,23 @@ jobs:
 
       - name: Run setup script for Flask app
         run: |
-          ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          # ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           echo "Connected to EC2 Instance"
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn
+
+          ssh-keygen -t rsa -b 4096 -c "chenbello3@gmail.com"
+          PUBLIC_KEY=$(cat ~/.ssh/id_rsa.pub)
+          echo "PUBLIC_KEY=${PUBLIC_KEY}" >> $GITHUB_ENV
+          gh secret set PUBLIC_KEY < ${PUBLIC_KEY} || echo "Failed to add secret"
           
           # Clone the application
           if [ ! -d "/home/ec2-user/PokeAPI" ]; then
             git clone https://github.com/ChenBello/pokeAPI.git /home/ec2-user/PokeAPI
           else
-            cd /home/ec2-user/PokeAPI && git pull origin main
+            cd /home/ec2-user/PokeAPI && git pull origin master
           fi
 
           # Set up Gunicorn service
