@@ -98,17 +98,20 @@ jobs:
 
       - name: Run setup script for Flask app
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn
           
-          if [ ! -d "/home/ec2-user/PokeAPI" ]; then
-            git clone https://github.com/ChenBello/pokeAPI.git /home/ec2-user/PokeAPI
+          # Create application directory
+          APP_DIR="/home/ec2-user/PokeAPI"
+          if [ ! -d "$APP_DIR" ]; then
+            git clone https://github.com/ChenBello/pokeAPI.git "$APP_DIR"
           else
-            cd /home/ec2-user/PokeAPI && git pull origin master
+            cd "$APP_DIR" && git pull origin master
           fi
 
+          # Create systemd service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
           [Unit]
           Description=Gunicorn instance to serve PokeAPI
@@ -117,16 +120,18 @@ jobs:
           [Service]
           User=ec2-user
           Group=nginx
-          WorkingDirectory=/home/ec2-user/PokeAPI
-          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 app:app
+          WorkingDirectory=$APP_DIR
+          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock -m 007 app:app
 
           [Install]
           WantedBy=multi-user.target
           EOL
 
+          sudo systemctl daemon-reload
           sudo systemctl start PokeAPI
           sudo systemctl enable PokeAPI
 
+          # Configure Nginx
           sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
           server {
               listen 80;
@@ -134,7 +139,7 @@ jobs:
 
               location / {
                   include proxy_params;
-                  proxy_pass http://unix:/home/ec2-user/PokeAPI/PokeAPI.sock;
+                  proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
               }
           }
           EOL
