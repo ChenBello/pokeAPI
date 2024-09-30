@@ -137,7 +137,8 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ env.PUBLIC_DNS }}
+          # ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           # Ensure the latest code is pulled from GitHub
           cd ~/flaskapp  # Change to your app's directory
           git pull origin master
