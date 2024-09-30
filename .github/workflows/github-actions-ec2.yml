@@ -30,15 +30,17 @@ jobs:
           KEY_PAIR_NAME="${{ secrets.KEY_PAIR_NAME }}"
           EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
           if [ -z "$EXISTING_KEY" ]; then
-            echo "Creating new Key Pair..."
-            aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-            chmod 400 ${KEY_PAIR_NAME}.pem
-            echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
-            echo "Adding private key to GitHub secrets..."
-            gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
+              echo "That Key-Pair doesn't exist.."
           else
-            echo "Using existing key pair: ${EXISTING_KEY}"
+              echo "Using existing key pair: ${EXISTING_KEY}"
           fi
+      #       echo "Creating new Key Pair..."
+      #       aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
+      #       chmod 400 ${KEY_PAIR_NAME}.pem
+      #       echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
+      #       echo "Adding private key to GitHub secrets..."
+      #       gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
+         
 
       - name: Store EC2 private key in secrets for SSH
         run: |
@@ -97,16 +99,17 @@ jobs:
         run: |
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
-     
-      - name: Add EC2 to known_hosts
-        run: ssh-keyscan -H ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
-      - name: Fix key permissions
-        run: chmod 400 /tmp/ec2_key.pem
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Fix key permissions
+        run: chmod 400 /tmp/ec2_key.pem
+
+      - name: Add EC2 to known_hosts
+        run: ssh-keyscan -H ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
 
       - name: Run setup script for Flask app
         run: |
@@ -120,44 +123,42 @@ jobs:
           else
             cd /home/ec2-user/PokeAPI && git pull origin master
           fi
-      
+
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
           [Unit]
           Description=Gunicorn instance to serve PokeAPI
           After=network.target
-      
+
           [Service]
           User=ec2-user
           Group=nginx
           WorkingDirectory=/home/ec2-user/PokeAPI
           ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 app:app
-      
+
           [Install]
           WantedBy=multi-user.target
           EOL
-      
+
           sudo systemctl start PokeAPI
           sudo systemctl enable PokeAPI
-      
+
           sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
           server {
               listen 80;
               server_name ${PUBLIC_DNS};
-      
+
               location / {
                   include proxy_params;
                   proxy_pass http://unix:/home/ec2-user/PokeAPI/PokeAPI.sock;
               }
           }
           EOL
-      
+
           sudo nginx -t
           sudo systemctl restart nginx
-      
+
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
           EOF
-
-
       - name: Test if the app is running
         run: |
           curl -I http://${{ env.PUBLIC_DNS }} || echo "Failed to connect to the app"
