@@ -32,21 +32,19 @@ jobs:
           if [ -z "$EXISTING_KEY" ]; then
             echo "Creating new Key Pair..."
             aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-            chmod 400 ${KEY_PAIR_NAME}.pem || exit 1
+            chmod 400 ${KEY_PAIR_NAME}.pem
             echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
             echo "Adding private key to GitHub secrets..."
             gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
-           else
+          else
             echo "Using existing key pair: ${EXISTING_KEY}"
-            echo "KEY_PAIR_NAME=${EXISTING_KEY}.pem" >> $GITHUB_ENV
           fi
-      
+
       - name: Store EC2 private key in secrets for SSH
         run: |
           echo "${{ env.KEY_PAIR_NAME }}" > /tmp/ec2_key.pem
           chmod 400 /tmp/ec2_key.pem
           echo "Private key stored and ready for SSH."
-
 
       - name: Check if EC2 instance exists
         id: ec2-check
@@ -100,39 +98,24 @@ jobs:
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
 
-      - name: Store EC2 private key in secrets for SSH
-        run: |
-          echo "${{ env.KEY_PAIR_NAME }}" > /tmp/ec2_key.pem
-          chmod 400 /tmp/ec2_key.pem
-          echo "Private key stored and ready for SSH."
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
-            ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Run setup script for Flask app
         run: |
-          # ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           ssh -i /tmp/ec2_key.pem ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-          echo "Connected to EC2 Instance"
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn
-
-          ssh-keygen -t rsa -b 4096 -c "chenbello3@gmail.com"
-          PUBLIC_KEY=$(cat ~/.ssh/id_rsa.pub)
-          echo "PUBLIC_KEY=${PUBLIC_KEY}" >> $GITHUB_ENV
-          gh secret set PUBLIC_KEY < ${PUBLIC_KEY} || echo "Failed to add secret"
           
-          # Clone the application
           if [ ! -d "/home/ec2-user/PokeAPI" ]; then
             git clone https://github.com/ChenBello/pokeAPI.git /home/ec2-user/PokeAPI
           else
             cd /home/ec2-user/PokeAPI && git pull origin master
           fi
 
-          # Set up Gunicorn service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
           [Unit]
           Description=Gunicorn instance to serve PokeAPI
@@ -151,7 +134,6 @@ jobs:
           sudo systemctl start PokeAPI
           sudo systemctl enable PokeAPI
 
-          # Configure Nginx
           sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
           server {
               listen 80;
@@ -167,107 +149,9 @@ jobs:
           sudo nginx -t
           sudo systemctl restart nginx
 
-          # Add welcome message to .bashrc
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
-
           EOF
 
       - name: Test if the app is running
         run: |
           curl -I http://${{ env.PUBLIC_DNS }} || echo "Failed to connect to the app"
-
-      # - name: Set up SSH
-      #   run: |
-      #     command -v ssh-agent >/dev/null || ( sudo apt-get update -y && sudo apt-get install openssh-client -y )
-      #     eval $(ssh-agent -s)
-      #     mkdir -p ~/.ssh
-      #     chmod 700 ~/.ssh
-      #     echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-      #     chmod 600 ~/.ssh/id_rsa
-      #     touch ~/.ssh/config
-      #     touch ~/.ssh/known_hosts
-      #     chmod 644 ~/.ssh/config
-      #     chmod 644 ~/.ssh/known_hosts
-      #     ssh-keyscan -H ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
-      #     echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config
-     
-      
-      # - name: Set up SSH
-      #   uses: webfactory/ssh-agent@v0.7.0
-      #   with:
-      #       ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-    
-      # - name: Deploy app to EC2
-      #   run: |
-      #       ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-      #         cd ~/PokeAPI  # הנתיב שבו שוכנת האפליקציה על EC2
-      #         git pull origin main  # משוך את העדכונים האחרונים
-      #         pip3 install -r requirements.txt  # עדכן חבילות אם צריך
-      #         pkill -f app.py  # עצור את האפליקציה אם היא כבר רצה
-      #         nohup python3 app.py &  # הרץ מחדש את Flask ברקע
-      #       EOF
-      # - name: Run setup script for Flask app
-      #   run: |
-      #     ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-      #     echo "Updating and installing required packages..."
-      #     sudo apt update -y
-      #     sudo apt install python3 python3-pip git -y
-      #     echo "Installing Flask..."
-      #     pip3 install flask requests
-      #     echo "Cloning the application from GitHub..."
-      #     git clone https://github.com/ChenBello/pokeAPI.git  # החלף בכתובת GitHub שלך
-      #     cd PokeAPI
-      #     echo "Starting the Flask application..."
-      #     nohup python3 app.py &
-      #     echo "The application is up and running!"
-      #     EOF
-
-      # - name: Connect via SSH and configure Flask app
-      #   run: |
-      #     ssh -tt -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-      #     echo "Connected to EC2 Instance"
-      #     sudo yum update -y
-      #     sudo yum install python3 python3-devel git -y
-      #     sudo yum install nginx -y
-      #     sudo pip3 install flask gunicorn
-      #     mkdir -p ~/PokeAPI
-      #     cd ~/PokeAPI
-      #     git clone https://github.com/ChenBello/pokeAPI.git .  # Replace with your repo
-      #     sudo systemctl start nginx
-      #     sudo systemctl enable nginx
-      #     sudo touch /etc/systemd/system/PokeAPI.service
-      #     echo "[Unit]
-      #     Description=Gunicorn instance to serve PokeAPI
-      #     After=network.target
-      #     echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
-
-
-      #     [Service]
-      #     User=ec2-user
-      #     Group=nginx
-      #     WorkingDirectory=/home/ec2-user/PokeAPI
-      #     ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 app:app
-
-      #     [Install]
-      #     WantedBy=multi-user.target" | sudo tee /etc/systemd/system/PokeAPI.service
-      #     sudo systemctl start PokeAPI
-      #     sudo systemctl enable PokeAPI
-      #     echo 'server {
-      #         listen 80;
-      #         server_name '${{ env.PUBLIC_DNS }}';
-      #         location / {
-      #             include proxy_params;
-      #             proxy_pass http://unix:/home/ec2-user/PokeAPI/PokeAPI.sock;
-      #         }
-      #     }' | sudo tee /etc/nginx/conf.d/PokeAPI.conf
-      #     sudo nginx -t
-      #     sudo systemctl restart nginx
-      #     EOF
-
-      # - name: Test if the app is running
-      #   run: |
-      #     curl -I http://${{ env.PUBLIC_DNS }} || echo "Failed to connect to the app"
-
-      # - name: Add usage instructions on login
-      #   run: |
-      #     echo "Welcome to your Flask app server. To restart the app, use 'sudo systemctl restart PokeAPI
