@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - master  # Trigger when pushing to the main branch
-
 jobs:
   create-ec2-deploy:
     name: Create EC2 and Deploy Flask App
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Add this line to provide authentication for GitHub CLI
 
     steps:
       - name: Checkout code
@@ -19,9 +20,11 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} 
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # Other steps
+      
       - name: Check GitHub CLI installation
         run: |
           gh --version
@@ -34,12 +37,33 @@ jobs:
           if [ -z "$EXISTING_KEY" ]; then
             echo "Creating new Key Pair..."
             aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-            chmod 400 ${KEY_PAIR_NAME}.pem
+            if [ $? -ne 0 ]; then
+              echo "Failed to create Key Pair" >&2
+              exit 1
+            fi
+            chmod 400 ${KEY_PAIR_NAME}.pem || exit 1
             echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
 
+            # Save the private key as a GitHub secret
             echo "Adding private key to GitHub secrets..."
-            gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem
+            gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
           fi
+
+
+      # - name: Check if Key Pair exists
+      #   id: keypair-check
+      #   run: |
+      #     KEY_PAIR_NAME="${{ secrets.KEY_PAIR_NAME }}"
+      #     EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
+      #     if [ -z "$EXISTING_KEY" ]; then
+      #       echo "Creating new Key Pair..."
+      #       aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
+      #       chmod 400 ${KEY_PAIR_NAME}.pem
+      #       echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
+
+      #       echo "Adding private key to GitHub secrets..."
+      #       gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem
+      #     fi
 
       - name: Check if EC2 instance exists
         id: ec2-check
