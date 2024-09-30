@@ -30,23 +30,11 @@ jobs:
           KEY_PAIR_NAME="${{ secrets.KEY_PAIR_NAME }}"
           EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
           if [ -z "$EXISTING_KEY" ]; then
-              echo "That Key-Pair doesn't exist.."
+              echo "Key Pair does not exist. Consider creating one."
+              exit 1  # Fail the job if the key pair does not exist
           else
               echo "Using existing key pair: ${EXISTING_KEY}"
           fi
-      #       echo "Creating new Key Pair..."
-      #       aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output text > ${KEY_PAIR_NAME}.pem
-      #       chmod 400 ${KEY_PAIR_NAME}.pem
-      #       echo "KEY_PAIR_FILE=${KEY_PAIR_NAME}.pem" >> $GITHUB_ENV
-      #       echo "Adding private key to GitHub secrets..."
-      #       gh secret set EC2_SSH_KEY < ${KEY_PAIR_NAME}.pem || echo "Failed to add secret"
-         
-
-      - name: Store EC2 private key in secrets for SSH
-        run: |
-          echo "${{ env.KEY_PAIR_NAME }}" > /tmp/ec2_key.pem
-          chmod 400 /tmp/ec2_key.pem
-          echo "Private key stored and ready for SSH."
 
       - name: Check if EC2 instance exists
         id: ec2-check
@@ -105,15 +93,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Fix key permissions
-        run: chmod 400 /tmp/ec2_key.pem
-
       - name: Add EC2 to known_hosts
         run: ssh-keyscan -H ${{ env.PUBLIC_DNS }} >> ~/.ssh/known_hosts
 
       - name: Run setup script for Flask app
         run: |
-          ssh -o StrictHostKeyChecking=no -i /tmp/ec2_key.pem ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn
@@ -159,6 +144,7 @@ jobs:
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
           EOF
+
       - name: Test if the app is running
         run: |
           curl -I http://${{ env.PUBLIC_DNS }} || echo "Failed to connect to the app"
