@@ -117,6 +117,11 @@ jobs:
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
           
+      - name: Generate SSH Key
+        run: |
+          ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+          echo "SSH Key generated."
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
