@@ -126,7 +126,7 @@ jobs:
           Group=ec2-user
           WorkingDirectory=/home/ec2-user/PokeAPI
           Environment="PATH=/usr/local/bin:/usr/bin"
-          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:80 -m 007 app:app
+          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock app:app
           Restart=always
           
           [Install]
@@ -163,7 +163,12 @@ jobs:
           # EOL
 
           sudo nginx -t
+          sudo systemctl daemon-reload
+          sudo systemctl start PokeAPI
+          sudo systemctl enable PokeAPI
           sudo systemctl restart nginx
+          sudo systemctl enable nginx  
+
           # Test and start Nginx
           # sudo nginx -t  # בדוק אם הקונפיגורציה תקינה
           # if [ $? -eq 0 ]; then  # אם הבדיקה הצליחה
@@ -174,7 +179,7 @@ jobs:
           # fi
           
           # sudo systemctl restart nginx  # אתחל את Nginx אחרי שינוי הקונפיגורציה
-          sudo systemctl enable nginx  # ודא ש-Nginx יופעל אוטומטית בהפעלות עתידיות
+          # sudo systemctl enable nginx  # ודא ש-Nginx יופעל אוטומטית בהפעלות עתידיות
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
           EOF
@@ -188,4 +193,4 @@ jobs:
 
       - name: Test if the app is running
         run: |
-          curl -I http://${{ env.PUBLIC_DNS }} || echo "Failed to connect to the app"
+          curl -I http://${{ env.PUBLIC_DNS }} | grep "200 OK" || echo "Failed to connect to the app"
