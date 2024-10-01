@@ -103,11 +103,18 @@ jobs:
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
-
-          # Modify nginx.conf if not set
-          if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
-            sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+          # Add welcome message to .bashrc
+          echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
+          
+          # Check and add server_names_hash_bucket_size to nginx.conf if not present
+          if ! grep -q "server_names_hash_bucket_size" /etc/nginx/nginx.conf; then
+              echo "server_names_hash_bucket_size 128;" | sudo tee -a /etc/nginx/nginx.conf
           fi
+
+          # # Modify nginx.conf if not set
+          # if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
+          #   sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+          # fi
 
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
