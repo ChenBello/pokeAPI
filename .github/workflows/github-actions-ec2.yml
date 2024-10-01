@@ -145,18 +145,18 @@ jobs:
           }
           EOL
 
-          # sudo nginx -t
-          # sudo systemctl restart nginx
+          sudo nginx -t
+          sudo systemctl restart nginx
           # Test and start Nginx
-          sudo nginx -t  # בדוק אם הקונפיגורציה תקינה
-          if [ $? -eq 0 ]; then  # אם הבדיקה הצליחה
-              sudo systemctl start nginx  # הפעל את Nginx אם הוא לא רץ
-          else
-              echo "Nginx configuration is invalid. Please check the configuration."
-              exit 1
-          fi
+          # sudo nginx -t  # בדוק אם הקונפיגורציה תקינה
+          # if [ $? -eq 0 ]; then  # אם הבדיקה הצליחה
+          #     sudo systemctl start nginx  # הפעל את Nginx אם הוא לא רץ
+          # else
+          #     echo "Nginx configuration is invalid. Please check the configuration."
+          #     exit 1
+          # fi
           
-          sudo systemctl restart nginx  # אתחל את Nginx אחרי שינוי הקונפיגורציה
+          # sudo systemctl restart nginx  # אתחל את Nginx אחרי שינוי הקונפיגורציה
           sudo systemctl enable nginx  # ודא ש-Nginx יופעל אוטומטית בהפעלות עתידיות
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
