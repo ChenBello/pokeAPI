@@ -136,11 +136,24 @@ jobs:
           sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
           server {
               listen 80;
-              server_name ${{ env.PUBLIC_DNS }}; 
-          location / {
-              include proxy_params;
-              proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+              server_name ec2-35-89-17-40.us-west-2.compute.amazonaws.com;
+          
+              location / {
+                  proxy_pass http://unix:/home/ec2-user/PokeAPI/PokeAPI.sock;
+                  proxy_set_header Host $host;  # העברת כותרת ה-HOST
+                  proxy_set_header X-Real-IP $remote_addr;  # העברת ה-IP של הלקוח
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;  # העברת הכתובת הנוספת
+                  proxy_set_header X-Forwarded-Proto $scheme;  # העברת פרוטוקול ה-HTTP/HTTPS
+              }
           }
+
+          # server {
+          #     listen 80;
+          #     server_name ${{ env.PUBLIC_DNS }}; 
+          # location / {
+          #     include proxy_params;
+          #     proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+          # }
           EOL
 
           sudo nginx -t
