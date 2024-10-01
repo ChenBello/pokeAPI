@@ -120,7 +120,7 @@ jobs:
 
           [Service]
           User=ec2-user
-          Group=nginx
+          Group=ec2-user
           WorkingDirectory=$APP_DIR
           ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock -m 007 app:app
 
