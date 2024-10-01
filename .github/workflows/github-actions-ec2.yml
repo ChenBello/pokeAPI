@@ -101,7 +101,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           # Update the system and install required packages
           sudo yum update -y
-          sudo yum install nginx -y
+          # sudo yum install nginx -y
+          sudo amazon-linux-extras install nginx1
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
       
