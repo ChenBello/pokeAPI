@@ -136,7 +136,7 @@ jobs:
           sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
           server {
               listen 80;
-              server_name ${{env.PUBLIC_DNS}};
+              server_name ${PUBLIC_DNS};
 
               location / {
                   include proxy_params;
