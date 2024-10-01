@@ -105,20 +105,26 @@ jobs:
           sudo amazon-linux-extras install nginx1
           sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
-          # sudo pip3 install requests
-          # python -m pip install --upgrade pip
-          pip3 install requests
-          pip3 install urllib3==1.26.16  # התקנה של גרסה קודמת של urllib3
           
-          sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+           # Install necessary Python packages
+          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+
+          # sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
       
           # Add the automatic run of apiHandling.py in .bashrc
-          echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
+          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
+          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> ~/.bashrc
+          # python3 /home/ec2-user/PokeAPI/apiHandling.py
           
+          # Install necessary Python packages
+          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+
+         
           # Modify nginx.conf if not set
           if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
             sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
           fi
+          
 
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
@@ -128,6 +134,16 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
 
+          # # Create start script
+          # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
+          # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
+          # chmod +x $APP_DIR/start_script.sh
+
+          # # Add start script to /etc/rc.local
+          # if ! grep -q "$APP_DIR/start_script.sh" /etc/rc.local; then
+          #   sudo sed -i "/exit 0/i $APP_DIR/start_script.sh &" /etc/rc.local
+          # fi
+          
           # Create systemd service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
           [Unit]
@@ -155,8 +171,8 @@ jobs:
               listen 80;
               server_name ${{ env.PUBLIC_DNS }};
               location / {
-                  # proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
-                  proxy_pass http://127.0.0.1:8000;
+                  proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  # proxy_pass http://127.0.0.1:8000;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -171,15 +187,36 @@ jobs:
           sudo systemctl enable nginx  
           sudo systemctl status nginx
 
-          echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
+          # Update .bashrc
+          BASHRC="$HOME/.bashrc"
+          
+          # Check if alias already exists, if not, add it
+          if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' "$BASHRC"; then
+              echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' >> "$BASHRC"
+          fi
+          
+          # Check if welcome message already exists, if not, add it
+          if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
+              echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
+          fi
+          
+          # Check if apiHandling.py is already executed, if not, add it
+          if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
+              echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> "$BASHRC"
+          fi
+
           EOF
 
-      
-      # - name: Check if PokeAPI is running
+      # - name: Create start script
       #   run: |
-      #     if ! systemctl is-active --quiet PokeAPI; then
-      #       echo "PokeAPI service is not running!"
-      #       exit 1
+      #     echo '#!/usr/bin/env python3' > /home/ec2-user/PokeAPI/start_script.sh
+      #     echo 'python3 /home/ec2-user/PokeAPI/apiHandling.py' >> /home/ec2-user/PokeAPI/start_script.sh
+      #     chmod +x /home/ec2-user/PokeAPI/start_script.sh
+
+      # - name: Add start script to /etc/rc.local
+      #   run: |
+      #     if ! grep -q "/home/ec2-user/PokeAPI/start_script.sh" /etc/rc.local; then
+      #       sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
       #     fi
 
       - name: Test if the app is running
