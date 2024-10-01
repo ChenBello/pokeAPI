@@ -101,10 +101,19 @@ jobs:
           ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           # Update the system and install required packages
           sudo yum update -y
+          # sudo yum install nginx -y
+          sudo amazon-linux-extras install nginx1
           sudo yum install python3 python3-devel git nginx -y
+          sudo yum install python3-pip -y
+          # sudo pip3 install requests
+          # python -m pip install --upgrade pip
+          pip3 install requests
+          pip3 install urllib3==1.26.16  # התקנה של גרסה קודמת של urllib3
+          
           sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
-          # Add welcome message to .bashrc
-          echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
+      
+          # Add the automatic run of apiHandling.py in .bashrc
+          echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
           
           # Modify nginx.conf if not set
           if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
@@ -146,7 +155,8 @@ jobs:
               listen 80;
               server_name ${{ env.PUBLIC_DNS }};
               location / {
-                  proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  # proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  proxy_pass http://127.0.0.1:8000;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -159,6 +169,7 @@ jobs:
           sudo nginx -t || { echo "Nginx configuration failed"; exit 1; }
           sudo systemctl restart nginx || { echo "Failed to restart Nginx"; exit 1; }
           sudo systemctl enable nginx  
+          sudo systemctl status nginx
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
           EOF
