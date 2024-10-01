@@ -99,6 +99,7 @@ jobs:
       - name: Run setup script for Flask app
         run: |
           ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          # Update the system and install required packages
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
           sudo pip3 install flask gunicorn
