@@ -102,17 +102,19 @@ jobs:
           # Update the system and install required packages
           sudo yum update -y
           sudo yum install python3 python3-devel git nginx -y
-          sudo pip3 install flask gunicorn
-          # Step 2: Modify nginx.conf to include server_names_hash_bucket_size 128;
-           if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
+          sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+
+          # Modify nginx.conf if not set
+          if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
             sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
-           fi
+          fi
+
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
           if [ ! -d "$APP_DIR" ]; then
-            git clone https://github.com/ChenBello/pokeAPI.git "$APP_DIR"
+            git clone https://github.com/ChenBello/pokeAPI.git "$APP_DIR" || { echo "Failed to clone repository"; exit 1; }
           else
-            cd "$APP_DIR" && git pull origin master
+            cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
 
           # Create systemd service
@@ -124,65 +126,41 @@ jobs:
           [Service]
           User=ec2-user
           Group=ec2-user
-          WorkingDirectory=/home/ec2-user/PokeAPI
-          Environment="PATH=/usr/local/bin:/usr/bin"
-          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock app:app
+          WorkingDirectory=$APP_DIR
+          ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock app:app
           Restart=always
           
           [Install]
           WantedBy=multi-user.target
-
           EOL
 
           sudo systemctl daemon-reload
-          sudo systemctl start PokeAPI
+          sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
           sudo systemctl enable PokeAPI
 
           # Configure Nginx
           sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
           server {
-          listen 80;
-          server_name ${{ env.PUBLIC_DNS }}; 
-      
-          location / {
-              proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
-              proxy_set_header Host \$host;  
-              proxy_set_header X-Real-IP \$remote_addr;  
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; 
-              proxy_set_header X-Forwarded-Proto \$scheme;  
-          }
+              listen 80;
+              server_name ${{ env.PUBLIC_DNS }};
+              location / {
+                  proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
           }
           EOL
-          # server {
-          #     listen 80;
-          #     server_name ${{ env.PUBLIC_DNS }}; 
-          # location / {
-          #     include $proxy_params;
-          #     proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
-          # }
-          # EOL
 
-          sudo nginx -t
-          sudo systemctl daemon-reload
-          sudo systemctl start PokeAPI
-          sudo systemctl enable PokeAPI
-          sudo systemctl restart nginx
+          # Check Nginx configuration
+          sudo nginx -t || { echo "Nginx configuration failed"; exit 1; }
+          sudo systemctl restart nginx || { echo "Failed to restart Nginx"; exit 1; }
           sudo systemctl enable nginx  
-
-          # Test and start Nginx
-          # sudo nginx -t  # בדוק אם הקונפיגורציה תקינה
-          # if [ $? -eq 0 ]; then  # אם הבדיקה הצליחה
-          #     sudo systemctl start nginx  # הפעל את Nginx אם הוא לא רץ
-          # else
-          #     echo "Nginx configuration is invalid. Please check the configuration."
-          #     exit 1
-          # fi
-          
-          # sudo systemctl restart nginx  # אתחל את Nginx אחרי שינוי הקונפיגורציה
-          # sudo systemctl enable nginx  # ודא ש-Nginx יופעל אוטומטית בהפעלות עתידיות
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
           EOF
+
       
       # - name: Check if PokeAPI is running
       #   run: |
