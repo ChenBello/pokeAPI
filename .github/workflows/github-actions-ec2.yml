@@ -123,10 +123,11 @@ jobs:
           
           [Service]
           User=ec2-user
-          Group=wheel
+          Group=ec2-user
           WorkingDirectory=/home/ec2-user/PokeAPI
           Environment="PATH=/usr/local/bin:/usr/bin"
-          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 app:app
+          ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:80 -m 007 app:app
+          Restart=always
           
           [Install]
           WantedBy=multi-user.target
