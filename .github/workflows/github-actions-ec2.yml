@@ -114,7 +114,7 @@ jobs:
       
           # Add the automatic run of apiHandling.py in .bashrc
           # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
-          echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> ~/.bashrc
+          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> ~/.bashrc
           # python3 /home/ec2-user/PokeAPI/apiHandling.py
 
          
@@ -175,6 +175,7 @@ jobs:
           sudo systemctl status nginx
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
+          python3 /home/ec2-user/PokeAPI/apiHandling.py
           EOF
 
       
