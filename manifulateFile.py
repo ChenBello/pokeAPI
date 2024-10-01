@@ -23,5 +23,13 @@ class File:
     @staticmethod
     def get_random_pokemon(filename='Pokemons.json'):
         with open(filename, 'r') as file:
-            pokemon_list = json.load(file)
-        return random.choice(pokemon_list)
+            pokemons = json.load(file)
+            # pokemons = pokemon_list['results']
+            random_index = random.randint(0, len(pokemons) - 1)
+            return pokemons[random_index]
+
+    # @staticmethod
+    # def get_random_pokemon(filename='Pokemons.json'):
+    #     with open(filename, 'r') as file:
+    #         pokemon_list = json.load(file)
+    #     return random.choice(pokemon_list)

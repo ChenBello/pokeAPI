@@ -5,64 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Pokémon</title>
     <style>
-        /* הגדרת סגנון עבור גוף הדף */
+        /* Style for the body of the page */
         body {
             margin: 0;
-            height: 100vh; /* הגדרת גובה מסך מלא */
-            display: flex;
-            justify-content: center; /* מרכז אופקית */
-            align-items: center; /* מרכז אנכית */
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0; /* רקע בהיר */
+            height: 100vh; /* Set height to full viewport height */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+            font-family: Arial, sans-serif; /* Set font */
+            background-color: #f0f0f0; /* Light background color */
         }
 
-        /* הגדרת סגנון לתיבת התוכן */
+        /* Style for the content box */
         .content {
-            text-align: center; /* ממרכז את הטקסט */
-            background-color: #fff; /* רקע לבן */
-            padding: 20px;
-            border-radius: 10px; /* פינות מעוגלות */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* הצללה קלה */
+            text-align: center; /* Center the text within the box */
+            background-color: #fff; /* White background for the content box */
+            padding: 20px; /* Padding around the content */
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
         }
 
+        /* Style for images */
         img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
+            max-width: 100%; /* Ensure image does not exceed container width */
+            height: auto; /* Maintain aspect ratio */
+            border-radius: 10px; /* Rounded corners for images */
         }
 
+        /* Style for the button */
         button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
+            padding: 10px 20px; /* Padding for the button */
+            background-color: #4CAF50; /* Green background color */
+            color: white; /* White text color */
+            border: none; /* Remove border */
+            border-radius: 5px; /* Rounded corners for button */
+            cursor: pointer; /* Change cursor to pointer on hover */
+            font-size: 16px; /* Set font size */
         }
 
+        /* Button hover effect */
         button:hover {
-            background-color: #45a049;
+            background-color: #45a049; /* Darker green on hover */
         }
     </style>
 </head>
 <body>
     <div class="content">
         <h1>Random Pokémon</h1>
-        {% if pokemon %}
-            <h2>Name: {{ pokemon['name'] }}</h2>
-            <h3>ID: {{ pokemon['id'] }}</h3>
-            <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3>
-            <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" />
-        {% else %}
-            <p>No Pokémon found!</p>
+        {% if pokemon %} <!-- Check if a Pokémon exists -->
+            <h2>Name: {{ pokemon['name'] }}</h2> <!-- Display Pokémon name -->
+            <h3>ID: {{ pokemon['id'] }}</h3> <!-- Display Pokémon ID -->
+            <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3> <!-- Display Pokémon abilities -->
+            <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" /> <!-- Display Pokémon image -->
+        {% else %} <!-- If no Pokémon is found -->
+            <p>No Pokémon found!</p> <!-- Display message -->
         {% endif %}
-        <form method="get" action="/">
-            <button type="submit">Get Random Pokémon</button>
+        <form method="get" action="/"> <!-- Form to get a new random Pokémon -->
+            <button type="submit">Get Random Pokémon</button> <!-- Submit button -->
         </form>
     </div>
 </body>
 </html>
+
 
 
 

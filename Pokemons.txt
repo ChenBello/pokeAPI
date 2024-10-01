@@ -19,3 +19,45 @@ Pokemon's Name: pidgeot, ID: 18, Abilities: keen-eye, tangled-feet, big-pecks, U
 Pokemon's Name: rattata, ID: 19, Abilities: run-away, guts, hustle, URL: https://pokeapi.co/api/v2/pokemon/19/
 Pokemon's Name: raticate, ID: 20, Abilities: run-away, guts, hustle, URL: https://pokeapi.co/api/v2/pokemon/20/
 
+Pokemon's Name: bulbasaur, ID: 1, Abilities: overgrow, chlorophyll, URL: https://pokeapi.co/api/v2/pokemon/1/
+Pokemon's Name: ivysaur, ID: 2, Abilities: overgrow, chlorophyll, URL: https://pokeapi.co/api/v2/pokemon/2/
+Pokemon's Name: venusaur, ID: 3, Abilities: overgrow, chlorophyll, URL: https://pokeapi.co/api/v2/pokemon/3/
+Pokemon's Name: charmander, ID: 4, Abilities: blaze, solar-power, URL: https://pokeapi.co/api/v2/pokemon/4/
+Pokemon's Name: charmeleon, ID: 5, Abilities: blaze, solar-power, URL: https://pokeapi.co/api/v2/pokemon/5/
+Pokemon's Name: charizard, ID: 6, Abilities: blaze, solar-power, URL: https://pokeapi.co/api/v2/pokemon/6/
+Pokemon's Name: squirtle, ID: 7, Abilities: torrent, rain-dish, URL: https://pokeapi.co/api/v2/pokemon/7/
+Pokemon's Name: wartortle, ID: 8, Abilities: torrent, rain-dish, URL: https://pokeapi.co/api/v2/pokemon/8/
+Pokemon's Name: blastoise, ID: 9, Abilities: torrent, rain-dish, URL: https://pokeapi.co/api/v2/pokemon/9/
+Pokemon's Name: caterpie, ID: 10, Abilities: shield-dust, run-away, URL: https://pokeapi.co/api/v2/pokemon/10/
+Pokemon's Name: metapod, ID: 11, Abilities: shed-skin, URL: https://pokeapi.co/api/v2/pokemon/11/
+Pokemon's Name: butterfree, ID: 12, Abilities: compound-eyes, tinted-lens, URL: https://pokeapi.co/api/v2/pokemon/12/
+Pokemon's Name: weedle, ID: 13, Abilities: shield-dust, run-away, URL: https://pokeapi.co/api/v2/pokemon/13/
+Pokemon's Name: kakuna, ID: 14, Abilities: shed-skin, URL: https://pokeapi.co/api/v2/pokemon/14/
+Pokemon's Name: beedrill, ID: 15, Abilities: swarm, sniper, URL: https://pokeapi.co/api/v2/pokemon/15/
+Pokemon's Name: pidgey, ID: 16, Abilities: keen-eye, tangled-feet, big-pecks, URL: https://pokeapi.co/api/v2/pokemon/16/
+Pokemon's Name: pidgeotto, ID: 17, Abilities: keen-eye, tangled-feet, big-pecks, URL: https://pokeapi.co/api/v2/pokemon/17/
+Pokemon's Name: pidgeot, ID: 18, Abilities: keen-eye, tangled-feet, big-pecks, URL: https://pokeapi.co/api/v2/pokemon/18/
+Pokemon's Name: rattata, ID: 19, Abilities: run-away, guts, hustle, URL: https://pokeapi.co/api/v2/pokemon/19/
+Pokemon's Name: raticate, ID: 20, Abilities: run-away, guts, hustle, URL: https://pokeapi.co/api/v2/pokemon/20/
+
+Pokemon's Name: bulbasaur, ID: 1, Abilities: overgrow, chlorophyll, URL: https://pokeapi.co/api/v2/pokemon/1/
+Pokemon's Name: ivysaur, ID: 2, Abilities: overgrow, chlorophyll, URL: https://pokeapi.co/api/v2/pokemon/2/
+Pokemon's Name: venusaur, ID: 3, Abilities: overgrow, chlorophyll, URL: https://pokeapi.co/api/v2/pokemon/3/
+Pokemon's Name: charmander, ID: 4, Abilities: blaze, solar-power, URL: https://pokeapi.co/api/v2/pokemon/4/
+Pokemon's Name: charmeleon, ID: 5, Abilities: blaze, solar-power, URL: https://pokeapi.co/api/v2/pokemon/5/
+Pokemon's Name: charizard, ID: 6, Abilities: blaze, solar-power, URL: https://pokeapi.co/api/v2/pokemon/6/
+Pokemon's Name: squirtle, ID: 7, Abilities: torrent, rain-dish, URL: https://pokeapi.co/api/v2/pokemon/7/
+Pokemon's Name: wartortle, ID: 8, Abilities: torrent, rain-dish, URL: https://pokeapi.co/api/v2/pokemon/8/
+Pokemon's Name: blastoise, ID: 9, Abilities: torrent, rain-dish, URL: https://pokeapi.co/api/v2/pokemon/9/
+Pokemon's Name: caterpie, ID: 10, Abilities: shield-dust, run-away, URL: https://pokeapi.co/api/v2/pokemon/10/
+Pokemon's Name: metapod, ID: 11, Abilities: shed-skin, URL: https://pokeapi.co/api/v2/pokemon/11/
+Pokemon's Name: butterfree, ID: 12, Abilities: compound-eyes, tinted-lens, URL: https://pokeapi.co/api/v2/pokemon/12/
+Pokemon's Name: weedle, ID: 13, Abilities: shield-dust, run-away, URL: https://pokeapi.co/api/v2/pokemon/13/
+Pokemon's Name: kakuna, ID: 14, Abilities: shed-skin, URL: https://pokeapi.co/api/v2/pokemon/14/
+Pokemon's Name: beedrill, ID: 15, Abilities: swarm, sniper, URL: https://pokeapi.co/api/v2/pokemon/15/
+Pokemon's Name: pidgey, ID: 16, Abilities: keen-eye, tangled-feet, big-pecks, URL: https://pokeapi.co/api/v2/pokemon/16/
+Pokemon's Name: pidgeotto, ID: 17, Abilities: keen-eye, tangled-feet, big-pecks, URL: https://pokeapi.co/api/v2/pokemon/17/
+Pokemon's Name: pidgeot, ID: 18, Abilities: keen-eye, tangled-feet, big-pecks, URL: https://pokeapi.co/api/v2/pokemon/18/
+Pokemon's Name: rattata, ID: 19, Abilities: run-away, guts, hustle, URL: https://pokeapi.co/api/v2/pokemon/19/
+Pokemon's Name: raticate, ID: 20, Abilities: run-away, guts, hustle, URL: https://pokeapi.co/api/v2/pokemon/20/
+

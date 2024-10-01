@@ -2,6 +2,14 @@ import json
 import requests
 from pokemon import Pokemon
 from manifulateFile import File
+import sys
+import io
+# import codecs
+# import sys
+
+sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+# sys.stdin = codecs.getreader('utf-8')(sys.stdin.buffer)
+
 
 # Ask the user if they would like to draw a Pokémon
 draw_pokemon = input("Would you like to draw a Pokémon? (y/n) ")

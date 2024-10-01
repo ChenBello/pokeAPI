@@ -7,6 +7,9 @@
     <list default="true" id="06c8cf9c-5543-4470-a515-fa27062435f2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Pokemons.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Pokemons.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apiHandling.py" beforeDir="false" afterPath="$PROJECT_DIR$/apiHandling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manifulateFile.py" beforeDir="false" afterPath="$PROJECT_DIR$/manifulateFile.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requiments.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -46,18 +49,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Python.apiHandling.executor": "Run",
-    "Python.app.executor": "Run",
-    "Python.manifulateFile.executor": "Run",
-    "Python.pokemon.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Python.apiHandling.executor&quot;: &quot;Run&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.manifulateFile.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pokemon.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
