@@ -123,7 +123,7 @@ jobs:
           
           [Service]
           User=ec2-user
-          Group=www-data
+          Group=wheel
           WorkingDirectory=/home/ec2-user/PokeAPI
           Environment="PATH=/usr/local/bin:/usr/bin"
           ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 app:app
