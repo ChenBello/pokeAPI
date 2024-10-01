@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="06c8cf9c-5543-4470-a515-fa27062435f2" name="Changes" comment="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte">
+    <list default="true" id="06c8cf9c-5543-4470-a515-fa27062435f2" name="Changes" comment="Trying to fix Error: EOFError: EOF when reading a line">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pokemons.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Pokemons.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apiHandling.py" beforeDir="false" afterPath="$PROJECT_DIR$/apiHandling.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -90,7 +89,15 @@
       <option name="project" value="LOCAL" />
       <updated>1727777922732</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Trying to fix Error: EOFError: EOF when reading a line">
+      <option name="closed" value="true" />
+      <created>1727778755488</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1727778755488</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -106,6 +113,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte" />
-    <option name="LAST_COMMIT_MESSAGE" value="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte" />
+    <MESSAGE value="Trying to fix Error: EOFError: EOF when reading a line" />
+    <option name="LAST_COMMIT_MESSAGE" value="Trying to fix Error: EOFError: EOF when reading a line" />
   </component>
 </project>

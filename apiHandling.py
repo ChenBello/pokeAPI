@@ -12,45 +12,45 @@ sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 
 
 # Ask the user if they would like to draw a Pokémon
-try:
-    draw_pokemon = input("Would you like to draw a Pokémon? (y/n) ") or 'n'  # default value 'n'
-except EOFError:
-    print("No input was received. Please ensure you are running this in an interactive session.")
-    sys.exit(1)
+while True:
+    draw_pokemon = input("Would you like to draw a Pokémon? (y/n) ")
+    if draw_pokemon.lower() in ['y', 'n']:
+        if draw_pokemon.lower() == "y":
+            response = requests.get("https://pokeapi.co/api/v2/pokemon/?offset=0&limit=20")
 
-if draw_pokemon.lower() == "y":
-    response = requests.get("https://pokeapi.co/api/v2/pokemon/?offset=0&limit=20")
+            if response.status_code == 200:
+                pokemon_list = response.json()["results"]
+                pokemons = []
 
-    if response.status_code == 200:
-        pokemon_list = response.json()["results"]
-        pokemons = []
+                for pokemon in pokemon_list:
+                    pokemon_url = pokemon["url"]
+                    pokemon_details_response = requests.get(pokemon_url)
 
-        for pokemon in pokemon_list:
-            pokemon_url = pokemon["url"]
-            pokemon_details_response = requests.get(pokemon_url)
+                    if pokemon_details_response.status_code == 200:
+                        pokemon_data = pokemon_details_response.json()
+                        pokemons.append(Pokemon(pokemon_url, pokemon_data))
 
-            if pokemon_details_response.status_code == 200:
-                pokemon_data = pokemon_details_response.json()
-                pokemons.append(Pokemon(pokemon_url, pokemon_data))
+                # Save all Pokémon data to JSON file using the File class
+                File.save_pokemon_list([pokemon.to_dict() for pokemon in pokemons], 'Pokemons.json')
 
-        # Save all Pokémon data to JSON file using the File class
-        File.save_pokemon_list([pokemon.to_dict() for pokemon in pokemons], 'Pokemons.json')
+                # Save Pokémon data to text file
+                save_file_txt = File(''.join(f"{pokemon}\n" for pokemon in pokemons))
 
-        # Save Pokémon data to text file
-        save_file_txt = File(''.join(f"{pokemon}\n" for pokemon in pokemons))
+                save_file_txt.save_to_file('Pokemons.txt')
 
-        save_file_txt.save_to_file('Pokemons.txt')
+                print(save_file_txt.data)
+                print("Pokemons saved to .txt file.")
 
-        print(save_file_txt.data)
-        print("Pokemons saved to .txt file.")
+                # Get a random Pokémon and display it
+                random_pokemon = File.get_random_pokemon('Pokemons.json')
+                print(f"Random Pokémon: {random_pokemon['name']} (ID: {random_pokemon['id']})")
 
-        # Get a random Pokémon and display it
-        random_pokemon = File.get_random_pokemon('Pokemons.json')
-        print(f"Random Pokémon: {random_pokemon['name']} (ID: {random_pokemon['id']})")
-
+            else:
+                print("Failed to retrieve Pokémon list.")
+        else:
+            print("Goodbye!")
     else:
-        print("Failed to retrieve Pokémon list.")
-
+        print("Please enter 'y' or 'n'.")
 # import json
 # import requests
 # from pokemon import Pokemon
