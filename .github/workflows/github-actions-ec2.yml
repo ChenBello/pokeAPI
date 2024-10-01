@@ -105,7 +105,10 @@ jobs:
           sudo amazon-linux-extras install nginx1
           sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
-          sudo pip3 install requests
+          # sudo pip3 install requests
+          # python -m pip install --upgrade pip
+          pip3 install requests
+          pip3 install urllib3==1.26.16  # התקנה של גרסה קודמת של urllib3
           
           sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
       
