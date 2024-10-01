@@ -134,15 +134,15 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
 
-          # Create start script
-          echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
-          echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
-          chmod +x $APP_DIR/start_script.sh
+          # # Create start script
+          # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
+          # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
+          # chmod +x $APP_DIR/start_script.sh
 
-          # Add start script to /etc/rc.local
-          if ! grep -q "$APP_DIR/start_script.sh" /etc/rc.local; then
-            sudo sed -i "/exit 0/i $APP_DIR/start_script.sh &" /etc/rc.local
-          fi
+          # # Add start script to /etc/rc.local
+          # if ! grep -q "$APP_DIR/start_script.sh" /etc/rc.local; then
+          #   sudo sed -i "/exit 0/i $APP_DIR/start_script.sh &" /etc/rc.local
+          # fi
           
           # Create systemd service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
@@ -187,8 +187,24 @@ jobs:
           sudo systemctl enable nginx  
           sudo systemctl status nginx
 
-          echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
-          # python3 /home/ec2-user/PokeAPI/apiHandling.py
+          # Update .bashrc
+          BASHRC="$HOME/.bashrc"
+          
+          # Check if alias already exists, if not, add it
+          if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' "$BASHRC"; then
+              echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' >> "$BASHRC"
+          fi
+          
+          # Check if welcome message already exists, if not, add it
+          if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
+              echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
+          fi
+          
+          # Check if apiHandling.py is already executed, if not, add it
+          if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
+              echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> "$BASHRC"
+          fi
+
           EOF
 
       # - name: Create start script
