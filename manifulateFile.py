@@ -2,18 +2,8 @@ import json
 import random
 
 class File:
-    def __init__(self, data):
-        self.data = data
-
-    def save_to_file(self, filename):
-        with open(filename, 'a') as file:
-            file.write(self.data + '\n')
-
-    # def get_random_pokemon(self, filename):
-    #     with open(filename, 'r') as file:
-    #         data = json.load(file)
-    #         random_pokemon = random.choice(data['results'])
-    #         return print("The random pokemon you chose: ", Pokemon(random_pokemon['url'], random_pokemon['name']))
+    def __init__(self):
+        pass
 
     @staticmethod
     def save_pokemon_list(pokemon_list, filename='Pokemons.json'):
@@ -21,15 +11,22 @@ class File:
             json.dump(pokemon_list, file, indent=4)
 
     @staticmethod
+    def load_pokemon_list(filename='Pokemons.json'):
+        try:
+            with open(filename, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return []
+
+    @staticmethod
+    def save_to_file(data, filename):
+        with open(filename, 'a') as file:
+            file.write(data + '\n')
+
+    @staticmethod
     def get_random_pokemon(filename='Pokemons.json'):
-        with open(filename, 'r') as file:
-            pokemons = json.load(file)
-            # pokemons = pokemon_list['results']
+        pokemons = File.load_pokemon_list(filename)
+        if pokemons:
             random_index = random.randint(0, len(pokemons) - 1)
             return pokemons[random_index]
-
-    # @staticmethod
-    # def get_random_pokemon(filename='Pokemons.json'):
-    #     with open(filename, 'r') as file:
-    #         pokemon_list = json.load(file)
-    #     return random.choice(pokemon_list)
+        return None
