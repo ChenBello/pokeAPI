@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="06c8cf9c-5543-4470-a515-fa27062435f2" name="Changes" comment="">
+    <list default="true" id="06c8cf9c-5543-4470-a515-fa27062435f2" name="Changes" comment="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Pokemons.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Pokemons.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apiHandling.py" beforeDir="false" afterPath="$PROJECT_DIR$/apiHandling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manifulateFile.py" beforeDir="false" afterPath="$PROJECT_DIR$/manifulateFile.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requiments.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,6 +74,23 @@
       <option name="presentableId" value="Default" />
       <updated>1727373700785</updated>
     </task>
+    <task id="LOCAL-00001" summary="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte">
+      <option name="closed" value="true" />
+      <created>1727777886876</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1727777886876</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte">
+      <option name="closed" value="true" />
+      <created>1727777922732</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1727777922732</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -89,5 +103,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte" />
+    <option name="LAST_COMMIT_MESSAGE" value="Trying to fix Error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7 in position 0: invalid continuation byte" />
   </component>
 </project>

@@ -12,7 +12,12 @@ sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 
 
 # Ask the user if they would like to draw a Pokémon
-draw_pokemon = input("Would you like to draw a Pokémon? (y/n) ")
+try:
+    draw_pokemon = input("Would you like to draw a Pokémon? (y/n) ") or 'n'  # default value 'n'
+except EOFError:
+    print("No input was received. Please ensure you are running this in an interactive session.")
+    sys.exit(1)
+
 if draw_pokemon.lower() == "y":
     response = requests.get("https://pokeapi.co/api/v2/pokemon/?offset=0&limit=20")
 
