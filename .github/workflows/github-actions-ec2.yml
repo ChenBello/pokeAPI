@@ -121,13 +121,11 @@ jobs:
           
           [Service]
           User=ec2-user
-          Group=nginx
+          Group=ec2-user
           WorkingDirectory=/home/ec2-user/PokeAPI
           ExecStart=/usr/local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 app:app
-          ExecStartPost=/bin/chmod 660 /home/ec2-user/PokeAPI/PokeAPI.sock
-          ExecStartPost=/bin/chown ec2-user:nginx /home/ec2-user/PokeAPI/PokeAPI.sock
           Restart=always
-          
+  
           [Install]
           WantedBy=multi-user.target
 
@@ -145,10 +143,10 @@ jobs:
       
           location / {
               proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
-              proxy_set_header Host \$host;  # העברת כותרת ה-HOST
-              proxy_set_header X-Real-IP \$remote_addr;  # העברת ה-IP של הלקוח
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;  # העברת הכתובת הנוספת
-              proxy_set_header X-Forwarded-Proto \$scheme;  # העברת פרוטוקול ה-HTTP/HTTPS
+              proxy_set_header Host \$host;  
+              proxy_set_header X-Real-IP \$remote_addr;  
+              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; 
+              proxy_set_header X-Forwarded-Proto \$scheme;  
           }
           }
           EOL
@@ -177,6 +175,13 @@ jobs:
 
           echo "Welcome to the Pokémon app! Type 'python3 app.py' to start drawing Pokémon." >> ~/.bashrc
           EOF
+      
+      - name: Check if PokeAPI is running
+        run: |
+          if ! systemctl is-active --quiet PokeAPI; then
+            echo "PokeAPI service is not running!"
+            exit 1
+          fi
 
       - name: Test if the app is running
         run: |
