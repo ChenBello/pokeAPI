@@ -202,17 +202,17 @@ jobs:
 
           EOF
 
-      - name: Create start script
-        run: |
-          echo '#!/usr/bin/env python3' > /home/ec2-user/PokeAPI/start_script.sh
-          echo 'python3 /home/ec2-user/PokeAPI/apiHandling.py' >> /home/ec2-user/PokeAPI/start_script.sh
-          chmod +x /home/ec2-user/PokeAPI/start_script.sh
+      # - name: Create start script
+      #   run: |
+      #     echo '#!/usr/bin/env python3' > /home/ec2-user/PokeAPI/start_script.sh
+      #     echo 'python3 /home/ec2-user/PokeAPI/apiHandling.py' >> /home/ec2-user/PokeAPI/start_script.sh
+      #     chmod +x /home/ec2-user/PokeAPI/start_script.sh
 
-      - name: Add start script to /etc/rc.local
-        run: |
-          if ! grep -q "/home/ec2-user/PokeAPI/start_script.sh" /etc/rc.local; then
-            sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
-          fi
+      # - name: Add start script to /etc/rc.local
+      #   run: |
+      #     if ! grep -q "/home/ec2-user/PokeAPI/start_script.sh" /etc/rc.local; then
+      #       sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
+      #     fi
 
       - name: Test if the app is running
         run: |
