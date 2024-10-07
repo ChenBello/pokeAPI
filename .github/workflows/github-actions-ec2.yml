@@ -185,15 +185,15 @@ jobs:
           # Update .bashrc
           BASHRC="$HOME/.bashrc"
           
-          # Check if alias already exists, if not, add it
-          if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' "$BASHRC"; then
-              echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' >> "$BASHRC"
-          fi
+          # # Check if alias already exists, if not, add it
+          # if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' "$BASHRC"; then
+          #     echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' >> "$BASHRC"
+          # fi
           
-          # Check if welcome message already exists, if not, add it
-          if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
-              echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
-          fi
+          # # Check if welcome message already exists, if not, add it
+          # if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
+          #     echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
+          # fi
           
           # Check if apiHandling.py is already executed, if not, add it
           if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
