@@ -10,11 +10,6 @@ jobs:
     name: Create EC2 and Deploy Flask App
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-west-2
-      SECURITY_GROUP_NAME: "PokeAPI-SG"
-      INSTANCE_TAG: "PokeAPI"
-      IAM_USER_NAME: "PokeAPIUser"
-      APP_DIR: "/home/ec2-user/PokeAPI"
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Provide authentication for GitHub CLI
 
     steps:
@@ -27,47 +22,65 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-west-2
 
       - name: Check if Key Pair exists
         id: keypair-check
         run: |
           KEY_PAIR_NAME="${{ secrets.KEY_PAIR_NAME }}"
-          aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || { echo "Key Pair does not exist."; exit 1; }
-
-      - name: Check and create Security Group
+          EXISTING_KEY=$(aws ec2 describe-key-pairs --key-names $KEY_PAIR_NAME --query 'KeyPairs[0].KeyName' --output text || echo "")
+          if [ -z "$EXISTING_KEY" ]; then
+              echo "Key Pair does not exist. Consider creating one."
+              exit 1  # Fail the job if the key pair does not exist
+          else
+              echo "Using existing key pair: ${EXISTING_KEY}"
+          fi
+      - name: Check if EC2 instance exists
+        id: ec2-check
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=PokeAPI" --query "Reservations[*].Instances[*].InstanceId" --output text)
+          if [ -n "$INSTANCE_ID" ]; then
+            echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
+          fi
+      - name: Check if Security Group exists
         id: sg-check
         run: |
-          EXISTING_SG=$(aws ec2 describe-security-groups --group-names ${{ env.SECURITY_GROUP_NAME }} --query 'SecurityGroups[0].GroupId' --output text || echo "")
+          SECURITY_GROUP_NAME="PokeAPI-SG"
+          EXISTING_SG=$(aws ec2 describe-security-groups --group-names $SECURITY_GROUP_NAME --query 'SecurityGroups[0].GroupId' --output text || echo "")
           if [ -z "$EXISTING_SG" ]; then
-            SG_ID=$(aws ec2 create-security-group --group-name ${{ env.SECURITY_GROUP_NAME }} --description "Security group for Flask app" --output text)
+            SG_ID=$(aws ec2 create-security-group --group-name $SECURITY_GROUP_NAME --description "Security group for Flask app" --output text)
+            echo "SG_ID=${SG_ID}" >> $GITHUB_ENV
             aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0  # Allow SSH
             aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0  # Allow HTTP
-            echo "Created Security Group with ID: $SG_ID"
           else
-            echo "Using existing Security Group: ${EXISTING_SG}"
-            SG_ID=$EXISTING_SG
+            echo "SG_ID=${EXISTING_SG}" >> $GITHUB_ENV
           fi
-          
-      - name: Find or create EC2 Instance
+      - name: Find Amazon Linux 2 AMI ID
+        id: ami-find
         run: |
-          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=${{ env.INSTANCE_TAG }}" --query "Reservations[*].Instances[*].InstanceId" --output text || echo "")
-          if [ -z "$INSTANCE_ID" ]; then
-            INSTANCE_ID=$(aws ec2 run-instances --image-id $(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" --query "Images[0].ImageId" --output text) --instance-type t2.micro --key-name ${{ secrets.KEY_PAIR_NAME }} --security-group-ids $SG_ID --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.INSTANCE_TAG }}]}" --query "Instances[0].InstanceId" --output text)
-            echo "Created new EC2 Instance with ID: $INSTANCE_ID"
-          else
-            echo "Using existing EC2 Instance: $INSTANCE_ID"
-          fi
-
+          AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" "Name=architecture,Values=x86_64" --query "Images[?contains(Name, 'amzn2-ami-hvm-')].[ImageId]" --output text | head -n 1)
+          echo "AMI_ID=${AMI_ID}" >> $GITHUB_ENV
+      - name: Create EC2 Instance if Not Exists
+        if: env.INSTANCE_ID == ''
+        id: ec2-create
+        run: |
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ${{ env.AMI_ID }} \
+            --instance-type t2.micro \
+            --key-name ${{ secrets.KEY_PAIR_NAME }} \
+            --security-group-ids ${{ env.SG_ID }} \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=PokeAPI}]' \
+            --query "Instances[0].InstanceId" \
+            --output text)
+          echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
       - name: Wait for EC2 instance to be running
-        run: aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-
+        run: |
+          aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
       - name: Get EC2 public DNS
         id: ec2-dns
         run: |
-          PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[*].Instances[*].PublicDnsName" --output text)
+          PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
@@ -81,12 +94,29 @@ jobs:
           ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           # Update the system and install required packages
           sudo yum update -y
+          # sudo yum install nginx -y
           sudo amazon-linux-extras install nginx1
-          sudo yum install python3 python3-devel git -y
+          sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
-
+          
+           # Install necessary Python packages
+          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+      
+          # Add the automatic run of apiHandling.py in .bashrc
+          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
+          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> ~/.bashrc
+          # python3 /home/ec2-user/PokeAPI/apiHandling.py
+          
           # Install necessary Python packages
           pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+
+         
+          # Modify nginx.conf if not set
+          if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
+            sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+          fi
+          
 
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
@@ -96,6 +126,16 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
 
+          # # Create start script
+          # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
+          # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
+          # chmod +x $APP_DIR/start_script.sh
+
+          # # Add start script to /etc/rc.local
+          # if ! grep -q "$APP_DIR/start_script.sh" /etc/rc.local; then
+          #   sudo sed -i "/exit 0/i $APP_DIR/start_script.sh &" /etc/rc.local
+          # fi
+          
           # Create systemd service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
           [Unit]
@@ -124,6 +164,7 @@ jobs:
               server_name ${{ env.PUBLIC_DNS }};
               location / {
                   proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  # proxy_pass http://127.0.0.1:8000;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -140,23 +181,36 @@ jobs:
 
           # Update .bashrc
           BASHRC="$HOME/.bashrc"
-
-          # Uncomment if you want to add aliases or messages to .bashrc
+          
+          # # Check if alias already exists, if not, add it
           # if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' "$BASHRC"; then
           #     echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' >> "$BASHRC"
           # fi
-
-          # if ! grep -q "Welcome to the Pokémon app!" "$BASHRC"; then
+          
+          # # Check if welcome message already exists, if not, add it
+          # if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
           #     echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
           # fi
-
-          # if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
-          #     echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> "$BASHRC"
-          # fi
+          
+          # Check if apiHandling.py is already executed, if not, add it
+          if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
+              echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> "$BASHRC"
+          fi
 
           EOF
+
+      # - name: Create start script
+      #   run: |
+      #     echo '#!/usr/bin/env python3' > /home/ec2-user/PokeAPI/start_script.sh
+      #     echo 'python3 /home/ec2-user/PokeAPI/apiHandling.py' >> /home/ec2-user/PokeAPI/start_script.sh
+      #     chmod +x /home/ec2-user/PokeAPI/start_script.sh
+
+      # - name: Add start script to /etc/rc.local
+      #   run: |
+      #     if ! grep -q "/home/ec2-user/PokeAPI/start_script.sh" /etc/rc.local; then
+      #       sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
+      #     fi
 
       - name: Test if the app is running
         run: |
           curl -I http://${{ env.PUBLIC_DNS }} | grep "200 OK" || echo "Failed to connect to the app"
-
