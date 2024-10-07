@@ -35,13 +35,7 @@ jobs:
           else
               echo "Using existing key pair: ${EXISTING_KEY}"
           fi
-      - name: Check if EC2 instance exists
-        id: ec2-check
-        run: |
-          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=PokeAPI" --query "Reservations[*].Instances[*].InstanceId" --output text)
-          if [ -n "$INSTANCE_ID" ]; then
-            echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
-          fi
+
       - name: Check if Security Group exists
         id: sg-check
         run: |
@@ -55,6 +49,15 @@ jobs:
           else
             echo "SG_ID=${EXISTING_SG}" >> $GITHUB_ENV
           fi
+
+      - name: Check if EC2 instance exists
+        id: ec2-check
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=PokeAPI" --query "Reservations[*].Instances[*].InstanceId" --output text)
+          if [ -n "$INSTANCE_ID" ]; then
+            echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
+          fi
+          
       - name: Find Amazon Linux 2 AMI ID
         id: ami-find
         run: |
@@ -182,15 +185,15 @@ jobs:
           # Update .bashrc
           BASHRC="$HOME/.bashrc"
           
-          # # Check if alias already exists, if not, add it
-          # if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' "$BASHRC"; then
-          #     echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' >> "$BASHRC"
-          # fi
+          # Check if alias already exists, if not, add it
+          if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' "$BASHRC"; then
+              echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' >> "$BASHRC"
+          fi
           
-          # # Check if welcome message already exists, if not, add it
-          # if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
-          #     echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
-          # fi
+          # Check if welcome message already exists, if not, add it
+          if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
+              echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
+          fi
           
           # Check if apiHandling.py is already executed, if not, add it
           if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
