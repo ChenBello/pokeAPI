@@ -134,13 +134,9 @@ jobs:
           # # Install required package
           # pip install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
-          
           # Install required packages from requirements.txt
           # pip install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
 
-          # # Install required packages from requirements.txt
-          # pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
-          
           # # Create start script
           # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
           # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
@@ -150,6 +146,10 @@ jobs:
           # if ! grep -q "$APP_DIR/start_script.sh" /etc/rc.local; then
           #   sudo sed -i "/exit 0/i $APP_DIR/start_script.sh &" /etc/rc.local
           # fi
+
+          # Change directory to flask_app
+          cd "$APP_DIR/flask_app"
+
           
           # Create systemd service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
@@ -161,7 +161,7 @@ jobs:
           User=ec2-user
           Group=ec2-user
           WorkingDirectory=$APP_DIR
-          ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock flask_app.app:app
+          ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock app:app
           Restart=always
           
           [Install]
@@ -178,8 +178,8 @@ jobs:
               listen 80;
               server_name ${{ env.PUBLIC_DNS }};
               location / {
-                  # proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
-                  proxy_pass http://localhost:5000;
+                  proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  # proxy_pass http://127.0.0.1:5000;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
