@@ -102,14 +102,14 @@ jobs:
           # set -e  # Exit immediately if a command exits with a non-zero status
 
           # Update the system and install required packages
-          sudo yum update -y
+          sudo yum update -y && sudo yum upgrade -y
           # sudo yum install nginx -y
           sudo amazon-linux-extras install nginx1
           sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
       
-          # Install necessary Python packages
-          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # # Install necessary Python packages
+          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
          
           # Modify nginx.conf if not set
@@ -125,17 +125,17 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
           
-          # # Create virtual environment
-          # cd "$APP_DIR"
-          # python3 -m venv myenv
-          # source myenv/bin/activate
+          # Create virtual environment
+          cd "$APP_DIR"
+          python3 -m venv venv
+          source venv/bin/activate
 
           # # Update pip to the newest version
           # pip install --upgrade pip
           # (/home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip)
 
-          # # Install required package
-          # pip install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # Install required package
+          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
           # Install required packages from requirements.txt
           # pip install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
@@ -151,7 +151,7 @@ jobs:
           # fi
 
           # Change directory to flask_app
-          # cd "$APP_DIR/flask_app"
+          cd "$APP_DIR/flask_app"
           
           # sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
           # sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
@@ -168,8 +168,8 @@ jobs:
           
           [Service]
           User=ec2-user
-          Group=ec2-user
-          # Group=www-data
+          # Group=ec2-user
+          Group=www-data
           WorkingDirectory=$APP_DIR/flask_app
           # Environment="PATH=/home/ec2-user/PokeAPI/venv/bin"  # Adjust this to your virtual environment path
           # ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock flask_app.app:app
@@ -178,7 +178,8 @@ jobs:
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 flask_app.app:app
-          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
+          # ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
+          ExecStart=/home/ec2-user/PokeAPI/venv/bin/gunicorn --bind -b localhost:8000 app:app
           Restart=always
           
           [Install]
