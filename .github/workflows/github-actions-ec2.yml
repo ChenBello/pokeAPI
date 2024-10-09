@@ -159,8 +159,8 @@ jobs:
           
           [Service]
           User=ec2-user
-          # Group=ec2-user
-          Group=nginx
+          Group=ec2-user
+          # Group=www-data
           WorkingDirectory=$APP_DIR/flask_app
           # Environment="PATH=/home/ec2-user/PokeAPI/venv/bin"  # Adjust this to your virtual environment path
           ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock flask_app.app:app
