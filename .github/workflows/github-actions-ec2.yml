@@ -125,10 +125,10 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
           
-          # Create virtual environment
-          cd "$APP_DIR"
-          python3 -m venv venv
-          source venv/bin/activate
+          # # Create virtual environment
+          # cd "$APP_DIR"
+          # python3 -m venv venv
+          # source venv/bin/activate
 
           # # Update pip to the newest version
           # pip install --upgrade pip
@@ -178,8 +178,8 @@ jobs:
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 flask_app.app:app
-          # ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
-          ExecStart=/home/ec2-user/PokeAPI/venv/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
+          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
+          # ExecStart=/home/ec2-user/PokeAPI/venv/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
           Restart=always
           
           [Install]
