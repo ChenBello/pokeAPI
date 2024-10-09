@@ -216,6 +216,7 @@ jobs:
       #     if ! grep -q "/home/ec2-user/PokeAPI/start_script.sh" /etc/rc.local; then
       #       sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
       #     fi
+      
 
       - name: Test if the app is running
         run: |
