@@ -1,4 +1,4 @@
-name: Deploy Flask App to EC2
+name: Deploy PokeAPI to EC2
 
 on:
   push:
@@ -36,14 +36,6 @@ jobs:
               echo "Using existing key pair: ${EXISTING_KEY}"
           fi
 
-      - name: Check if EC2 instance exists
-        id: ec2-check
-        run: |
-          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=PokeAPI" --query "Reservations[*].Instances[*].InstanceId" --output text)
-          if [ -n "$INSTANCE_ID" ]; then
-            echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
-          fi
-
       - name: Check if Security Group exists
         id: sg-check
         run: |
@@ -58,12 +50,19 @@ jobs:
             echo "SG_ID=${EXISTING_SG}" >> $GITHUB_ENV
           fi
 
+      - name: Check if EC2 instance exists
+        id: ec2-check
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=PokeAPI" --query "Reservations[*].Instances[*].InstanceId" --output text)
+          if [ -n "$INSTANCE_ID" ]; then
+            echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
+          fi
+          
       - name: Find Amazon Linux 2 AMI ID
         id: ami-find
         run: |
           AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2" "Name=architecture,Values=x86_64" --query "Images[?contains(Name, 'amzn2-ami-hvm-')].[ImageId]" --output text | head -n 1)
           echo "AMI_ID=${AMI_ID}" >> $GITHUB_ENV
-
       - name: Create EC2 Instance if Not Exists
         if: env.INSTANCE_ID == ''
         id: ec2-create
@@ -77,17 +76,14 @@ jobs:
             --query "Instances[0].InstanceId" \
             --output text)
           echo "INSTANCE_ID=${INSTANCE_ID}" >> $GITHUB_ENV
-
       - name: Wait for EC2 instance to be running
         run: |
           aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
-
       - name: Get EC2 public DNS
         id: ec2-dns
         run: |
           PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${{ env.INSTANCE_ID }} --query "Reservations[*].Instances[*].PublicDnsName" --output text)
           echo "PUBLIC_DNS=${PUBLIC_DNS}" >> $GITHUB_ENV
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
@@ -106,24 +102,15 @@ jobs:
           sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
           
-           # Install necessary Python packages
-          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
-
-          # sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
       
-          # Add the automatic run of apiHandling.py in .bashrc
-          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
-          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> ~/.bashrc
-          # python3 /home/ec2-user/PokeAPI/apiHandling.py
-          
-          # Install necessary Python packages
-          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # # Install necessary Python packages
+          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
          
-          # Modify nginx.conf if not set
-          if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
-            sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
-          fi
+          # # Modify nginx.conf if not set
+          # if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
+          #   sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+          # fi
           
 
           # Create application directory
@@ -134,6 +121,9 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
 
+          # Install required packages from requirements.txt
+          pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
+          
           # # Create start script
           # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
           # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
@@ -190,15 +180,15 @@ jobs:
           # Update .bashrc
           BASHRC="$HOME/.bashrc"
           
-          # Check if alias already exists, if not, add it
-          if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' "$BASHRC"; then
-              echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/app.py"' >> "$BASHRC"
-          fi
+          # # Check if alias already exists, if not, add it
+          # if ! grep -q 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' "$BASHRC"; then
+          #     echo 'alias start_pokemon_app="python3 /home/ec2-user/PokeAPI/apiHandling.py"' >> "$BASHRC"
+          # fi
           
-          # Check if welcome message already exists, if not, add it
-          if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
-              echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
-          fi
+          # # Check if welcome message already exists, if not, add it
+          # if ! grep -q "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." "$BASHRC"; then
+          #     echo "Welcome to the Pokémon app! Type 'start_pokemon_app' to start drawing Pokémon." >> "$BASHRC"
+          # fi
           
           # Check if apiHandling.py is already executed, if not, add it
           if ! grep -q "python3 /home/ec2-user/PokeAPI/apiHandling.py" "$BASHRC"; then
