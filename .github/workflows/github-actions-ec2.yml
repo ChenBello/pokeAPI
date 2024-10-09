@@ -103,7 +103,7 @@ jobs:
           sudo yum install python3-pip -y
           
       
-          # # Install necessary Python packages
+          # Install necessary Python packages
           # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
          
@@ -130,8 +130,12 @@ jobs:
           pip install --upgrade pip
           # /home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip
 
+          # # Install required package
+          pip install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+
+          
           # Install required packages from requirements.txt
-          pip install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
+          # pip install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
 
           # # Install required packages from requirements.txt
           # pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
