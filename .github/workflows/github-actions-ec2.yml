@@ -104,10 +104,9 @@ jobs:
           sudo amazon-linux-extras install nginx1
           sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
-          
       
           # Install necessary Python packages
-          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
          
           # Modify nginx.conf if not set
@@ -115,7 +114,6 @@ jobs:
             sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
           fi
           
-
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
           if [ ! -d "$APP_DIR" ]; then
@@ -124,17 +122,17 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
           
-          # Create virtual environment
-          cd "$APP_DIR"
-          python3 -m venv myenv
-          source myenv/bin/activate
+          # # Create virtual environment
+          # cd "$APP_DIR"
+          # python3 -m venv myenv
+          # source myenv/bin/activate
 
           # # Update pip to the newest version
-          pip install --upgrade pip
-          # /home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip
+          # pip install --upgrade pip
+          # (/home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip)
 
           # # Install required package
-          pip install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # pip install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
           
           # Install required packages from requirements.txt
