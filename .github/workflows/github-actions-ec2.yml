@@ -148,8 +148,9 @@ jobs:
           # fi
 
           # Change directory to flask_app
-          cd "$APP_DIR/flask_app"
+          # cd "$APP_DIR/flask_app"
           sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+          sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
           sudo service iptables save
           sudo systemctl enable iptables
 
