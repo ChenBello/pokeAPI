@@ -46,6 +46,7 @@ jobs:
             echo "SG_ID=${SG_ID}" >> $GITHUB_ENV
             aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0  # Allow SSH
             aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0  # Allow HTTP
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 5000 --cidr 0.0.0.0/0  # Allow HTTP on port 5000
           else
             echo "SG_ID=${EXISTING_SG}" >> $GITHUB_ENV
           fi
@@ -235,7 +236,9 @@ jobs:
       #       sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
       #     fi
       
-
+      - name: Wait for the app to start
+        run: sleep 15  # Wait for 15 seconds
+        
       - name: Test if the app is running
         run: |
           curl -I http://${{ env.PUBLIC_DNS }} | grep "200 OK" || echo "Failed to connect to the app"
