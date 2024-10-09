@@ -99,7 +99,7 @@ jobs:
       - name: Run setup script for Flask app
         run: |
           ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-          set -e  # Exit immediately if a command exits with a non-zero status
+          # set -e  # Exit immediately if a command exits with a non-zero status
 
           # Update the system and install required packages
           sudo yum update -y
@@ -152,10 +152,11 @@ jobs:
 
           # Change directory to flask_app
           # cd "$APP_DIR/flask_app"
-          sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-          sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
-          sudo service iptables save
-          sudo systemctl enable iptables
+          
+          # sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+          # sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+          # sudo service iptables save
+          # sudo systemctl enable iptables
 
 
           
