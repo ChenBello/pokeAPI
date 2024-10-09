@@ -30,3 +30,4 @@ class File:
             random_index = random.randint(0, len(pokemons) - 1)
             return pokemons[random_index]
         return None
+

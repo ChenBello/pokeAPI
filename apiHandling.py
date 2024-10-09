@@ -2,7 +2,8 @@ import io
 import sys
 import random
 import requests
-from manifulateFile import File
+# from manifulateFile import File
+from poke_modules.file_utils import FileUtils
 from pokemon import Pokemon
 
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
@@ -12,30 +13,30 @@ def draw_pokemon():
     return draw_pokemon_input.lower() in ['y', 'yes']
 
 def fetch_new_pokemon():
+    pokemon_list = []
     # Fetch new Pokémon data
     response = requests.get("https://pokeapi.co/api/v2/pokemon/?offset=0&limit=20")
     if response.status_code == 200:
         pokemon_list = response.json()["results"]
     else:
         print("Failed to retrieve Pokémon list.")
-        pokemon_list = []
     return pokemon_list
 
 def fetch_pokemon_details(url):
+    pokemon_data = None
     # Fetch details of a specific Pokémon
     pokemon_details_response = requests.get(url)
     if pokemon_details_response.status_code == 200:
         pokemon_data = pokemon_details_response.json()
     else:
         print("Failed to retrieve Pokémon details.")
-        pokemon_data = None
     return pokemon_data
 
 def main():
     to_run = True
     while to_run:
         if draw_pokemon():
-            existing_pokemons = File.load_pokemon_list()
+            existing_pokemons = FileUtils.load_pokemon_list()
             pokemon_list = fetch_new_pokemon()
 
             if pokemon_list:
@@ -53,7 +54,7 @@ def main():
                     if pokemon_data:
                         new_pokemon = Pokemon(selected_url, pokemon_data)
                         existing_pokemons.append(new_pokemon.to_dict())
-                        File.save_pokemon_list(existing_pokemons)
+                        FileUtils.save_pokemon_list(existing_pokemons)
                         print(f"New Pokémon added: {new_pokemon.name} (ID: {new_pokemon.id})")
                         print(f"Abilities: {new_pokemon.abilities}")
             else:
@@ -158,7 +159,7 @@ if __name__ == "__main__":
 # #                         pokemons.append(Pokemon(pokemon_url, pokemon_data))
 # #
 # #                 # Save all Pokémon data to JSON file using the File class
-# #                 File.save_pokemon_list([pokemon.to_dict() for pokemon in pokemons], 'Pokemons.json')
+# #                 File.save_pokemon_list([pokemon.to_dict() for pokemon in pokemons], 'AllPokemons.json')
 # #
 # #                 # Save Pokémon data to text file
 # #                 save_file_txt = File(''.join(f"{pokemon}\n" for pokemon in pokemons))
@@ -169,7 +170,7 @@ if __name__ == "__main__":
 # #                 print("Pokemons saved to .txt file.")
 # #
 # #                 # Get a random Pokémon and display it
-# #                 random_pokemon = File.get_random_pokemon('Pokemons.json')
+# #                 random_pokemon = File.get_random_pokemon('AllPokemons.json')
 # #                 print(f"Random Pokémon: {random_pokemon['name']} (ID: {random_pokemon['id']})")
 # #                 break
 # #             else:
@@ -195,8 +196,8 @@ if __name__ == "__main__":
 # # #         # json_data = json.dumps(pokemon_list, indent=4)
 # # #         #
 # # #         # save_file_json = File(json_data)
-# # #         # save_file_json.save_to_file('Pokemons.json')
-# # #         # save_file_json.get_random_pokemon('Pokemons.json')
+# # #         # save_file_json.save_to_file('AllPokemons.json')
+# # #         # save_file_json.get_random_pokemon('AllPokemons.json')
 # # #
 # # #         pokemons = []
 # # #         pokemons_json = []
@@ -218,7 +219,7 @@ if __name__ == "__main__":
 # # #                 pokemons.append(Pokemon(pokemon_url, pokemon_data))
 # # #
 # # #         # Save all Pokémon data to JSON file using the File class
-# # #         File.save_pokemon_list(pokemons, 'Pokemons.json')
+# # #         File.save_pokemon_list(pokemons, 'AllPokemons.json')
 # # #
 # # #         # Save Pokémon data to text file
 # # #         save_file_txt = File(''.join(f"{pokemon}\n" for pokemon in pokemons))
@@ -233,7 +234,7 @@ if __name__ == "__main__":
 # # #         File.save_pokemon_list(pokemons, 'Pokemons2.json')
 # # #
 # # #         # Get a random Pokémon and display it
-# # #         random_pokemon = File.get_random_pokemon('Pokemons.json')
+# # #         random_pokemon = File.get_random_pokemon('AllPokemons.json')
 # # #         print(f"Random Pokémon: {random_pokemon['name']} (ID: {random_pokemon['id']})")
 # # #
 # # #     else:

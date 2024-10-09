@@ -5,7 +5,7 @@ import random
 app = Flask(__name__)
 
 def get_random_pokemon():
-    with open('Pokemons.json', 'r') as file:
+    with open('AllPokemons.json', 'r') as file:
         pokemons = json.load(file)
         return random.choice(pokemons)
 
