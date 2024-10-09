@@ -163,7 +163,8 @@ jobs:
           # Group=www-data
           WorkingDirectory=$APP_DIR/flask_app
           # Environment="PATH=/home/ec2-user/PokeAPI/venv/bin"  # Adjust this to your virtual environment path
-          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock flask_app.app:app
+          ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock -m 007 flask_app.app:app
+          # ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/flask_app/PokeAPI.sock app:app
           Restart=always
           
