@@ -1,4 +1,4 @@
-name: Deploy Flask App to EC2
+name: Deploy PokeAPI to EC2
 
 on:
   push:
@@ -102,23 +102,15 @@ jobs:
           sudo yum install python3 python3-devel git nginx -y
           sudo yum install python3-pip -y
           
-           # Install necessary Python packages
-          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
-          # sudo pip3 install flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
       
-          # Add the automatic run of apiHandling.py in .bashrc
-          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py &" >> ~/.bashrc
-          # echo "python3 /home/ec2-user/PokeAPI/apiHandling.py" >> ~/.bashrc
-          # python3 /home/ec2-user/PokeAPI/apiHandling.py
-          
-          # Install necessary Python packages
-          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # # Install necessary Python packages
+          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
          
-          # Modify nginx.conf if not set
-          if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
-            sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
-          fi
+          # # Modify nginx.conf if not set
+          # if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
+          #   sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+          # fi
           
 
           # Create application directory
@@ -129,6 +121,9 @@ jobs:
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
 
+          # Install required packages from requirements.txt
+          pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
+          
           # # Create start script
           # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
           # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
