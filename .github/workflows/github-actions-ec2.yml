@@ -178,7 +178,7 @@ jobs:
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:$APP_DIR/PokeAPI.sock flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 flask_app.app:app
           # ExecStart=/usr/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 flask_app.app:app
-          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
+          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock app:app
           # ExecStart=/home/ec2-user/PokeAPI/venv/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
           Restart=always
           
