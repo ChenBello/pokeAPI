@@ -120,9 +120,17 @@ jobs:
           else
             cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
-
+          
+          # Create virtual environment
+          cd "$APP_DIR"
+          python3 -m venv myenv
+          source myenv/bin/activate
+      
           # Install required packages from requirements.txt
-          pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
+          pip install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
+
+          # # Install required packages from requirements.txt
+          # pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
           
           # # Create start script
           # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
