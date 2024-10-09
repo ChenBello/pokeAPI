@@ -126,12 +126,12 @@ jobs:
           python3 -m venv myenv
           source myenv/bin/activate
 
-          # Update pip to the newest version
-          pip install --upgrade pip
+          # # Update pip to the newest version
+          # pip install --upgrade pip
           # /home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip
 
           # # Install required package
-          pip install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
           
           # Install required packages from requirements.txt
