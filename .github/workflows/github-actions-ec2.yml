@@ -174,8 +174,8 @@ jobs:
           [Service]
           User=ec2-user
           Group=nginx
-          WorkingDirectory=$APP_DIR/flask_app
-          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/PokeAPI.sock app:app
+          WorkingDirectory=/home/ec2-user/PokeAPI/flask_app # $APP_DIR/flask_app
+          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:/home/ec2-user/PokeAPI/flask_app/PokeAPI.sock app:app
           Restart=always
           
           [Install]
@@ -192,7 +192,7 @@ jobs:
               listen 80;
               server_name ${{ env.PUBLIC_DNS }};
               location / {
-                  proxy_pass http://unix:$APP_DIR/PokeAPI.sock;
+                  proxy_pass http://unix:$APP_DIR/flask_app/PokeAPI.sock;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
