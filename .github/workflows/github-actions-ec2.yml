@@ -162,6 +162,9 @@ jobs:
           sudo usermod -aG nginx ec2-user
           newgrp nginx
 
+          sudo chown ec2-user:nginx /home/ec2-user/PokeAPI/PokeAPI.sock
+          sudo chmod 660 /home/ec2-user/PokeAPI/PokeAPI.sock
+          
           # Create systemd service
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
           [Unit]
@@ -178,10 +181,6 @@ jobs:
           [Install]
           WantedBy=multi-user.target
           EOL
-
-          sudo chown ec2-user:nginx /home/ec2-user/PokeAPI/PokeAPI.sock
-          sudo chmod 660 /home/ec2-user/PokeAPI/PokeAPI.sock
-
 
           sudo systemctl daemon-reload
           sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
