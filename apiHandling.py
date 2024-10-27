@@ -5,7 +5,7 @@ import requests
 # from manifulateFile import File
 from poke_modules.file_utils import FileUtils
 from pokemon import Pokemon
-from dynamo_utils import upload_to_dynamodb  # Import the DynamoDB upload function
+from poke_modules.dynamo_utils import upload_to_dynamodb  # Import the DynamoDB upload function
 
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 
@@ -62,7 +62,7 @@ def main():
                         print(f"Abilities: {new_pokemon.abilities}")
                         
                         # Upload to DynamoDB
-                        upload_to_dynamodb(new_pokemon, "PokemonTable")
+                        upload_to_dynamodb(new_pokemon, "PokemonTable")  # upload_to_dynamodb(new_pokemon.to_dict(), "PokemonTable") \  upload_to_dynamodb(existing_pokemons[-1], "PokemonTable") 
             else:
                 print("No Pokémon available to draw.")
         else:
