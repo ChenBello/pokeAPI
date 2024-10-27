@@ -52,19 +52,48 @@
 <body>
     <div class="content">
         <h1>Random Pokémon</h1>
-        {% if pokemon %} <!-- Check if a Pokémon exists -->
-            <h2>Name: {{ pokemon['name'] }}</h2> <!-- Display Pokémon name -->
-            <h3>ID: {{ pokemon['id'] }}</h3> <!-- Display Pokémon ID -->
-            <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3> <!-- Display Pokémon abilities -->
-            <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" /> <!-- Display Pokémon image -->
-        {% else %} <!-- If no Pokémon is found -->
-            <p>No Pokémon found!</p> <!-- Display message -->
-        {% endif %}
-        <form method="get" action="/"> <!-- Form to get a new random Pokémon -->
-            <button type="submit">Get Random Pokémon</button> <!-- Submit button -->
-        </form>
+        <div id="pokemon-info">
+            <h2>Name: {{ pokemon['name'] }}</h2>
+            <h3>ID: {{ pokemon['id'] }}</h3>
+            <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3>
+            <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" />
+        </div>
+        <button id="get-pokemon">Get Random Pokémon</button>
     </div>
+
+    <script>
+        document.getElementById('get-pokemon').addEventListener('click', function() {
+            fetch('/random_pokemon')
+            .then(response => response.json())
+            .then(pokemon => {
+                const pokemonInfo = `
+                    <h2>Name: ${pokemon.name}</h2>
+                    <h3>ID: ${pokemon.id}</h3>
+                    <h3>Abilities: ${pokemon.abilities.join(', ')}</h3>
+                    <img src="${pokemon.image_url}" alt="${pokemon.name}" />
+                `;
+                document.getElementById('pokemon-info').innerHTML = pokemonInfo;
+            })
+            .catch(error => console.error('Error fetching the Pokémon:', error));
+        });
+    </script>
 </body>
+<!--<body>-->
+<!--    <div class="content">-->
+<!--        <h1>Random Pokémon</h1>-->
+<!--        {% if pokemon %} &lt;!&ndash; Check if a Pokémon exists &ndash;&gt;-->
+<!--            <h2>Name: {{ pokemon['name'] }}</h2> &lt;!&ndash; Display Pokémon name &ndash;&gt;-->
+<!--            <h3>ID: {{ pokemon['id'] }}</h3> &lt;!&ndash; Display Pokémon ID &ndash;&gt;-->
+<!--            <h3>Abilities: {{ pokemon['abilities'] | join(', ') }}</h3> &lt;!&ndash; Display Pokémon abilities &ndash;&gt;-->
+<!--            <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}" /> &lt;!&ndash; Display Pokémon image &ndash;&gt;-->
+<!--        {% else %} &lt;!&ndash; If no Pokémon is found &ndash;&gt;-->
+<!--            <p>No Pokémon found!</p> &lt;!&ndash; Display message &ndash;&gt;-->
+<!--        {% endif %}-->
+<!--        <form method="get" action="/"> &lt;!&ndash; Form to get a new random Pokémon &ndash;&gt;-->
+<!--            <button type="submit">Get Random Pokémon</button> &lt;!&ndash; Submit button &ndash;&gt;-->
+<!--        </form>-->
+<!--    </div>-->
+<!--</body>-->
 </html>
 
 
