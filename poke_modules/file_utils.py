@@ -59,25 +59,4 @@ class FileUtils:
         # Use a single return statement to either return a random Pokémon or None
         return pokemons[random.randint(0, len(pokemons) - 1)] if pokemons else None
 
-    import boto3
-
-    @staticmethod
-    def upload_to_dynamodb(pokemon, table_name):
-        """
-        Uploads a Pokemon instance to DynamoDB.
-    
-        Args:
-            pokemon (Pokemon): An instance of the Pokemon class.
-            table_name (str): The name of the DynamoDB table.
-        """
-        dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.Table(table_name)
-        
-        # Prepare the item dictionary from Pokemon object
-        item = pokemon.to_dict()
-        
-        # Upload the item to DynamoDB
-        table.put_item(Item=item)
-
-
 
