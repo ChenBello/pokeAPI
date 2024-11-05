@@ -98,35 +98,42 @@ jobs:
 
       - name: Run setup script for Flask app
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-          # set -e  # Exit immediately if a command exits with a non-zero status
 
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
           # Update the system and install required packages
           sudo yum update -y && sudo yum upgrade -y || { echo "Failed to update system"; exit 1; }
-          sudo amazon-linux-extras install nginx1 || { echo "Failed to install Nginx"; exit 1; }
-          sudo yum install python3 python3-devel git nginx -y || { echo "Failed to install required packages"; exit 1; }
-          
+          sudo yum install python3 python3-devel git -y || { echo "Failed to install required packages"; exit 1; }
           sudo yum install python3-pip -y
+          
+          # ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
+          # # set -e  # Exit immediately if a command exits with a non-zero status
+
+          # # Update the system and install required packages
+          # sudo yum update -y && sudo yum upgrade -y || { echo "Failed to update system"; exit 1; }
+          # sudo amazon-linux-extras install nginx1 || { echo "Failed to install Nginx"; exit 1; }
+          # sudo yum install python3 python3-devel git nginx -y || { echo "Failed to install required packages"; exit 1; }
+          
+          # sudo yum install python3-pip -y
       
           # # Install necessary Python packages
           # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
          
-          # Modify nginx.conf if not set
-          if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
-            sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
-          fi
+          # # Modify nginx.conf if not set
+          # if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
+          #   sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+          # fi
           
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
           if [ ! -d "$APP_DIR" ]; then
-          echo "Cloning into $APP_DIR"
-          git clone https://github.com/ChenBello/pokeAPI.git "$APP_DIR" || { echo "Failed to clone repository"; exit 1; }
+              echo "Cloning into $APP_DIR"
+              git clone https://github.com/ChenBello/pokeAPI.git "$APP_DIR" || { echo "Failed to clone repository"; exit 1; }
           else
-          echo "Directory exists, pulling latest changes..."
-          cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
+              echo "Directory exists, pulling latest changes..."
+              cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
-
+          
           # # Create virtual environment
           # cd "$APP_DIR"
           # python3 -m venv venv
@@ -136,8 +143,34 @@ jobs:
           pip install --upgrade pip
           # (/home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip)
 
-          # Install required package
-          pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
+          # Install required packages from requirements.txt
+          pip3 install -r "$APP_DIR/requirements.txt" || { echo "Failed to install requirements"; exit 1; }
+
+          # Create systemd service for Gunicorn
+          sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
+          [Unit]
+          Description=PokeAPI service
+          After=network.target
+          
+          [Service]
+          User=ec2-user
+          Group=ec2-user
+          WorkingDirectory=$APP_DIR
+          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+          Restart=always
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOL
+
+          sudo systemctl daemon-reload
+          sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
+          sudo systemctl enable PokeAPI
+
+          EOF
+          
+          # # Install required package
+          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
           # Install required packages from requirements.txt
           pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
@@ -157,57 +190,57 @@ jobs:
           # sudo service iptables save
           # sudo systemctl enable iptables
 
-          sudo groupadd nginx
-          sudo usermod -aG nginx ec2-user
-          newgrp nginx
+          # sudo groupadd nginx
+          # sudo usermod -aG nginx ec2-user
+          # newgrp nginx
 
-          sudo chown ec2-user:nginx /home/ec2-user/PokeAPI/PokeAPI.sock
-          sudo chmod 660 /home/ec2-user/PokeAPI/PokeAPI.sock
+          # sudo chown ec2-user:nginx /home/ec2-user/PokeAPI/PokeAPI.sock
+          # sudo chmod 660 /home/ec2-user/PokeAPI/PokeAPI.sock
           
-          # Create systemd service
-          sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
-          [Unit]
-          Description=PokeAPI service
-          After=network.target
+          # # Create systemd service
+          # sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
+          # [Unit]
+          # Description=PokeAPI service
+          # After=network.target
           
-          [Service]
-          User=ec2-user
-          Group=nginx
-          WorkingDirectory=$APP_DIR/flask_app # /home/ec2-user/PokeAPI/flask_app
-          ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/flask_app/PokeAPI.sock app:app
-          Restart=always
+          # [Service]
+          # User=ec2-user
+          # Group=www
+          # WorkingDirectory=$APP_DIR/flask_app # /home/ec2-user/PokeAPI/flask_app
+          # ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/flask_app/PokeAPI.sock app:app
+          # Restart=always
           
-          [Install]
-          WantedBy=multi-user.target
-          EOL
+          # [Install]
+          # WantedBy=multi-user.target
+          # EOL
 
-          sudo systemctl daemon-reload
-          sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
-          sudo systemctl enable PokeAPI
+          # sudo systemctl daemon-reload
+          # sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
+          # sudo systemctl enable PokeAPI
 
-          # Configure Nginx
-          sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
-          server {
-              listen 80;
-              server_name ${{ env.PUBLIC_DNS }};
-              location / {
-                  proxy_pass http://unix:$APP_DIR/flask_app/PokeAPI.sock;
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-              }
-          }
-          EOL
+          # # Configure Nginx
+          # sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
+          # server {
+          #     listen 80;
+          #     server_name ${{ env.PUBLIC_DNS }};
+          #     location / {
+          #         proxy_pass http://unix:$APP_DIR/flask_app/PokeAPI.sock;
+          #         proxy_set_header Host \$host;
+          #         proxy_set_header X-Real-IP \$remote_addr;
+          #         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+          #         proxy_set_header X-Forwarded-Proto \$scheme;
+          #     }
+          # }
+          # EOL
 
-          # Check Nginx configuration
-          sudo nginx -t || { echo "Nginx configuration failed"; exit 1; }
-          sudo systemctl restart nginx || { echo "Failed to restart Nginx"; exit 1; }
-          sudo systemctl enable nginx  
-          sudo systemctl status nginx
+          # # Check Nginx configuration
+          # sudo nginx -t || { echo "Nginx configuration failed"; exit 1; }
+          # sudo systemctl restart nginx || { echo "Failed to restart Nginx"; exit 1; }
+          # sudo systemctl enable nginx  
+          # sudo systemctl status nginx
           
-          # # Check Nginx configuration and restart
-          # sudo nginx -t && sudo systemctl restart nginx
+          # # # Check Nginx configuration and restart
+          # # sudo nginx -t && sudo systemctl restart nginx
 
           # Update .bashrc
           BASHRC="$HOME/.bashrc"
