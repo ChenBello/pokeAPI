@@ -104,26 +104,11 @@ jobs:
           sudo yum update -y && sudo yum upgrade -y || { echo "Failed to update system"; exit 1; }
           sudo yum install python3 python3-devel git -y || { echo "Failed to install required packages"; exit 1; }
           sudo yum install python3-pip -y
-          
-          # ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_DNS }} << 'EOF'
-          # # set -e  # Exit immediately if a command exits with a non-zero status
 
-          # # Update the system and install required packages
-          # sudo yum update -y && sudo yum upgrade -y || { echo "Failed to update system"; exit 1; }
-          # sudo amazon-linux-extras install nginx1 || { echo "Failed to install Nginx"; exit 1; }
-          # sudo yum install python3 python3-devel git nginx -y || { echo "Failed to install required packages"; exit 1; }
           
-          # sudo yum install python3-pip -y
-      
           # # Install necessary Python packages
           # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
-         
-          # # Modify nginx.conf if not set
-          # if ! grep -q "server_names_hash_bucket_size 128;" /etc/nginx/nginx.conf; then
-          #   sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
-          # fi
-          
           # Create application directory
           APP_DIR="/home/ec2-user/PokeAPI"
           if [ ! -d "$APP_DIR" ]; then
@@ -133,18 +118,16 @@ jobs:
               echo "Directory exists, pulling latest changes..."
               cd "$APP_DIR" && git pull origin master || { echo "Failed to pull latest changes"; exit 1; }
           fi
-          
-          # # Create virtual environment
-          # cd "$APP_DIR"
-          # python3 -m venv venv
-          # source venv/bin/activate
 
           # Update pip to the newest version
-          pip install --upgrade pip
+          pip install --upgrade pip || { echo "Failed to upgrade pip"; exit 1; }
           # (/home/ec2-user/PokeAPI/myenv/bin/python3 -m pip install --upgrade pip)
 
           # Install required packages from requirements.txt
           pip3 install -r "$APP_DIR/requirements.txt" || { echo "Failed to install requirements"; exit 1; }
+          
+          # Install required package
+          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
 
           # Create systemd service for Gunicorn
           sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
@@ -167,81 +150,8 @@ jobs:
           sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
           sudo systemctl enable PokeAPI
 
-          EOF
+          # Check if apiHandling.py is already executed, if not, add it        
           
-          # # Install required package
-          # pip3 install requests urllib3==1.26.16 flask gunicorn || { echo "Failed to install Flask and Gunicorn"; exit 1; }
-
-          # Install required packages from requirements.txt
-          pip3 install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
-
-          # # Create start script
-          # echo '#!/usr/bin/env python3' > $APP_DIR/start_script.sh
-          # echo 'python3 $APP_DIR/apiHandling.py' >> $APP_DIR/start_script.sh
-          # chmod +x $APP_DIR/start_script.sh
-
-          # # Add start script to /etc/rc.local
-          # if ! grep -q "$APP_DIR/start_script.sh" /etc/rc.local; then
-          #   sudo sed -i "/exit 0/i $APP_DIR/start_script.sh &" /etc/rc.local
-          # fi
-          
-          # sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-          # sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
-          # sudo service iptables save
-          # sudo systemctl enable iptables
-
-          # sudo groupadd nginx
-          # sudo usermod -aG nginx ec2-user
-          # newgrp nginx
-
-          # sudo chown ec2-user:nginx /home/ec2-user/PokeAPI/PokeAPI.sock
-          # sudo chmod 660 /home/ec2-user/PokeAPI/PokeAPI.sock
-          
-          # # Create systemd service
-          # sudo tee /etc/systemd/system/PokeAPI.service > /dev/null <<EOL
-          # [Unit]
-          # Description=PokeAPI service
-          # After=network.target
-          
-          # [Service]
-          # User=ec2-user
-          # Group=www
-          # WorkingDirectory=$APP_DIR/flask_app # /home/ec2-user/PokeAPI/flask_app
-          # ExecStart=/home/ec2-user/.local/bin/gunicorn --workers 3 --bind unix:$APP_DIR/flask_app/PokeAPI.sock app:app
-          # Restart=always
-          
-          # [Install]
-          # WantedBy=multi-user.target
-          # EOL
-
-          # sudo systemctl daemon-reload
-          # sudo systemctl start PokeAPI || { echo "Failed to start PokeAPI service"; exit 1; }
-          # sudo systemctl enable PokeAPI
-
-          # # Configure Nginx
-          # sudo tee /etc/nginx/conf.d/PokeAPI.conf > /dev/null <<EOL
-          # server {
-          #     listen 80;
-          #     server_name ${{ env.PUBLIC_DNS }};
-          #     location / {
-          #         proxy_pass http://unix:$APP_DIR/flask_app/PokeAPI.sock;
-          #         proxy_set_header Host \$host;
-          #         proxy_set_header X-Real-IP \$remote_addr;
-          #         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-          #         proxy_set_header X-Forwarded-Proto \$scheme;
-          #     }
-          # }
-          # EOL
-
-          # # Check Nginx configuration
-          # sudo nginx -t || { echo "Nginx configuration failed"; exit 1; }
-          # sudo systemctl restart nginx || { echo "Failed to restart Nginx"; exit 1; }
-          # sudo systemctl enable nginx  
-          # sudo systemctl status nginx
-          
-          # # # Check Nginx configuration and restart
-          # # sudo nginx -t && sudo systemctl restart nginx
-
           # Update .bashrc
           BASHRC="$HOME/.bashrc"
           
@@ -262,18 +172,7 @@ jobs:
 
           EOF
 
-      # - name: Create start script
-      #   run: |
-      #     echo '#!/usr/bin/env python3' > /home/ec2-user/PokeAPI/start_script.sh
-      #     echo 'python3 /home/ec2-user/PokeAPI/apiHandling.py' >> /home/ec2-user/PokeAPI/start_script.sh
-      #     chmod +x /home/ec2-user/PokeAPI/start_script.sh
 
-      # - name: Add start script to /etc/rc.local
-      #   run: |
-      #     if ! grep -q "/home/ec2-user/PokeAPI/start_script.sh" /etc/rc.local; then
-      #       sudo sed -i "/exit 0/i /home/ec2-user/PokeAPI/start_script.sh &" /etc/rc.local
-      #     fi
-      
       - name: Wait for the app to start
         run: sleep 15  # Wait for 15 seconds
 
@@ -286,8 +185,9 @@ jobs:
             echo "PokeAPI is running successfully! Response code: $RESPONSE"
           else
             echo "Failed to reach PokeAPI. Response code: $RESPONSE"
-            # exit 1  # Fail the job if the app is not running
+            exit 1  # Fail the job if the app is not running
           fi
+          
       # - name: Test if the app is running
       #   run: |
       #     curl -I http://${{ env.PUBLIC_DNS }} | grep "200 OK" || echo "Failed to connect to the app"
